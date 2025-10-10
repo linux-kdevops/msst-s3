@@ -14,11 +14,24 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 234 | 39.5% |
-| **Remaining** | 358 | 60.5% |
+| **Ported** | 243 | 41.0% |
+| **Remaining** | 349 | 59.0% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (234 tests across 22 files)
+## Ported Tests (243 tests across 23 files)
+
+### ✅ test_list_parts.py (9 tests)
+Tests ListParts API for multipart uploads with pagination and validation.
+
+- `test_list_parts_incorrect_upload_id` - NoSuchUpload for invalid upload ID
+- `test_list_parts_incorrect_object_key` - NoSuchUpload for mismatched key
+- `test_list_parts_invalid_max_parts` - InvalidArgument for negative MaxParts
+- `test_list_parts_default_max_parts` - Default MaxParts (MinIO: 10000, AWS: 1000)
+- `test_list_parts_truncated` - Pagination with MaxParts and NextPartNumberMarker
+- `test_list_parts_success` - Full part listing with metadata (PartNumber, ETag, Size)
+- `test_list_parts_empty_upload` - Empty parts list for upload with no parts
+- `test_list_parts_after_abort` - NoSuchUpload after aborting upload
+- `test_list_parts_part_number_marker` - Pagination with PartNumberMarker (int type required)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -365,7 +378,6 @@ High-value categories to port next (ordered by priority):
 | **PutObjectRetention** | 11 | MEDIUM | Object retention policies |
 | **AccessControl** | 11 | MEDIUM | Access control integration |
 | **DeleteObject** | 10 | LOW | Deletion edge cases |
-| **ListParts** | 9 | LOW | List multipart parts |
 | **ListObjectVersions** | 9 | LOW | Version listing |
 | **ListMultipartUploads** | 9 | LOW | List in-progress uploads |
 | **CreateBucket** | 9 | LOW | Bucket creation (basics covered) |
@@ -438,7 +450,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 97.9% (229/234 tests)
+- **Current Pass Rate**: 98.0% (238/243 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -478,6 +490,15 @@ Last Updated: 2025-10-10
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 15 (2025-10-10)**: Added 9 tests
+- **test_list_parts.py**: 9 ListParts API tests (100% pass rate)
+- Upload ID and key validation with NoSuchUpload errors
+- Part number pagination with PartNumberMarker (requires int type)
+- Pagination with MaxParts and NextPartNumberMarker
+- MinIO uses default MaxParts of 10000 vs AWS S3's 1000
+- Empty upload handling and post-abort validation
+- Part metadata verification (PartNumber, ETag, Size)
 
 **Batch 14 (2025-10-10)**: Added 10 tests
 - **test_create_multipart.py**: 10 CreateMultipartUpload tests (100% pass rate)
