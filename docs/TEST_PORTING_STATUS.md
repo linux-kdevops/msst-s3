@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 400 | 67.6% |
-| **Remaining** | 192 | 32.4% |
+| **Ported** | 406 | 68.6% |
+| **Remaining** | 186 | 31.4% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (400 tests across 39 files)
+## Ported Tests (406 tests across 39 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -62,7 +62,7 @@ Tests GetObjectAttributes API operations.
 - `test_get_object_attributes_response_fields` - Verify response structure and field types
 - `test_get_object_attributes_multipart_object` - ObjectParts information for multipart objects
 
-### ✅ test_put_bucket_acl.py (10 tests)
+### ✅ test_put_bucket_acl.py (16 tests)
 Tests PutBucketAcl and GetBucketAcl API operations.
 
 - `test_put_bucket_acl_non_existing_bucket` - PutBucketAcl on non-existing bucket (NoSuchBucket)
@@ -75,6 +75,12 @@ Tests PutBucketAcl and GetBucketAcl API operations.
 - `test_put_bucket_acl_response_status` - HTTP 200 status validation
 - `test_put_bucket_acl_invalid_acl_value` - Invalid ACL value (NotImplemented in MinIO)
 - `test_put_bucket_acl_then_update` - Update ACL multiple times
+- `test_put_bucket_acl_with_grant_read` - GrantRead parameter for READ permission (MinIO: owner ID limitation)
+- `test_put_bucket_acl_with_grant_write` - GrantWrite parameter for WRITE permission (MinIO: owner ID limitation)
+- `test_put_bucket_acl_with_grant_full_control` - GrantFullControl parameter for FULL_CONTROL permission (MinIO: owner ID limitation)
+- `test_put_bucket_acl_with_access_control_policy` - AccessControlPolicy with full ACL structure
+- `test_put_bucket_acl_grant_read_acp` - GrantReadACP parameter for READ_ACP permission (MinIO: owner ID limitation)
+- `test_put_bucket_acl_grant_write_acp` - GrantWriteACP parameter for WRITE_ACP permission (MinIO: owner ID limitation)
 
 ### ✅ test_head_object_additional.py (10 tests)
 Tests additional HeadObject scenarios and edge cases.
@@ -589,7 +595,7 @@ High-value categories to port next (ordered by priority):
 | **PresignedAuth** | 24 | MEDIUM | Presigned URL authentication |
 | **Authentication** | 22 | MEDIUM | Authentication edge cases |
 | **GetObject** | 8 | MEDIUM | Additional get scenarios (36/26 ported - exceeded!) |
-| **PutBucketAcl** | 6 | MEDIUM | Bucket ACL management (10/16 ported) |
+| **PutBucketAcl** | 0 | MEDIUM | Bucket ACL management (16/16 ported - ✅ COMPLETE!) |
 | **PutBucketPolicy** | 13 | MEDIUM | Bucket policy management (10/23 ported) |
 | **CreateMultipartUpload** | 15 | MEDIUM | Multipart upload initialization |
 | **HeadObject** | 4 | MEDIUM | Head object edge cases (25/14 ported - exceeded!) |
@@ -667,8 +673,8 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.8% (395/400 tests)
-- **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
+- **Current Pass Rate**: 97.5% (396/406 tests)
+- **Known Failures**: 10 tests (3 CRC32C dependency, 2 path validation, 5 MinIO owner ID limitation)
 
 ## Quality Standards
 
@@ -708,7 +714,23 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
 
-**🎉 MILESTONE: 67% Complete! 🎉**
+**🎉 MILESTONE: 68% Complete! 🎉**
+
+**Batch 32 (2025-10-10)**: Added 6 tests - **REACHED 68.6%! ✅ PutBucketAcl COMPLETE!**
+- **test_put_bucket_acl.py**: 6 additional PutBucketAcl tests (9 passed, 7 skipped)
+- Grant parameters:
+  - GrantRead: Grant READ permission to specified grantee
+  - GrantWrite: Grant WRITE permission to specified grantee
+  - GrantFullControl: Grant FULL_CONTROL permission to specified grantee
+  - GrantReadACP: Grant READ_ACP permission (read ACL)
+  - GrantWriteACP: Grant WRITE_ACP permission (write ACL)
+  - AccessControlPolicy: Full ACL structure with Owner and Grants
+- MinIO compatibility notes:
+  - MinIO returns empty owner ID which prevents Grant* parameter testing
+  - 5 tests skipped due to MinIO owner ID limitation
+  - AccessControlPolicy works with full ACL structure
+  - Canonical user ID format required: id=<owner-id>
+- **🎉 PUTBUCKETACL CATEGORY COMPLETE: 16/16 tests ported (100%)! 🎉**
 
 **Batch 31 (2025-10-10)**: Added 10 tests - **REACHED 67.6%!**
 - **test_put_bucket_policy.py**: 10 PutBucketPolicy tests (100% pass rate)

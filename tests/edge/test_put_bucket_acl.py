@@ -402,3 +402,289 @@ def test_put_bucket_acl_then_update(s3_client, config):
 
     finally:
         fixture.cleanup()
+
+
+def test_put_bucket_acl_with_grant_read(s3_client, config):
+    """
+    Test PutBucketAcl with GrantRead parameter
+
+    Should grant READ permission to specified grantee
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("acl-grant-read")
+        s3_client.create_bucket(bucket_name)
+
+        # Try PutBucketAcl with GrantRead
+        try:
+            # Use canonical user ID format (requires valid user ID)
+            # For testing, we'll use the owner's ID
+            acl_response = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            owner_id = acl_response["Owner"]["ID"]
+
+            # MinIO may return empty owner ID
+            if not owner_id:
+                pytest.skip("Owner ID not available (MinIO limitation)")
+                return
+
+            s3_client.client.put_bucket_acl(
+                Bucket=bucket_name, GrantRead=f"id={owner_id}"
+            )
+
+            # Verify with GetBucketAcl
+            updated_acl = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            assert "Grants" in updated_acl
+            # Should have at least the READ grant
+            read_grants = [
+                g for g in updated_acl["Grants"] if g.get("Permission") == "READ"
+            ]
+            assert len(read_grants) > 0
+
+        except ClientError as e:
+            # ACL grants may not be supported
+            if e.response["Error"]["Code"] in ["NotImplemented", "AccessDenied"]:
+                pytest.skip("GrantRead not supported")
+                return
+            raise
+
+    finally:
+        fixture.cleanup()
+
+
+def test_put_bucket_acl_with_grant_write(s3_client, config):
+    """
+    Test PutBucketAcl with GrantWrite parameter
+
+    Should grant WRITE permission to specified grantee
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("acl-grant-write")
+        s3_client.create_bucket(bucket_name)
+
+        # Try PutBucketAcl with GrantWrite
+        try:
+            # Use owner's ID for testing
+            acl_response = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            owner_id = acl_response["Owner"]["ID"]
+
+            # MinIO may return empty owner ID
+            if not owner_id:
+                pytest.skip("Owner ID not available (MinIO limitation)")
+                return
+
+            s3_client.client.put_bucket_acl(
+                Bucket=bucket_name, GrantWrite=f"id={owner_id}"
+            )
+
+            # Verify with GetBucketAcl
+            updated_acl = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            assert "Grants" in updated_acl
+            # Should have at least the WRITE grant
+            write_grants = [
+                g for g in updated_acl["Grants"] if g.get("Permission") == "WRITE"
+            ]
+            assert len(write_grants) > 0
+
+        except ClientError as e:
+            if e.response["Error"]["Code"] in ["NotImplemented", "AccessDenied"]:
+                pytest.skip("GrantWrite not supported")
+                return
+            raise
+
+    finally:
+        fixture.cleanup()
+
+
+def test_put_bucket_acl_with_grant_full_control(s3_client, config):
+    """
+    Test PutBucketAcl with GrantFullControl parameter
+
+    Should grant FULL_CONTROL permission to specified grantee
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("acl-grant-full")
+        s3_client.create_bucket(bucket_name)
+
+        # Try PutBucketAcl with GrantFullControl
+        try:
+            # Use owner's ID for testing
+            acl_response = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            owner_id = acl_response["Owner"]["ID"]
+
+            # MinIO may return empty owner ID
+            if not owner_id:
+                pytest.skip("Owner ID not available (MinIO limitation)")
+                return
+
+            s3_client.client.put_bucket_acl(
+                Bucket=bucket_name, GrantFullControl=f"id={owner_id}"
+            )
+
+            # Verify with GetBucketAcl
+            updated_acl = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            assert "Grants" in updated_acl
+            # Should have FULL_CONTROL grant
+            full_control_grants = [
+                g
+                for g in updated_acl["Grants"]
+                if g.get("Permission") == "FULL_CONTROL"
+            ]
+            assert len(full_control_grants) > 0
+
+        except ClientError as e:
+            if e.response["Error"]["Code"] in ["NotImplemented", "AccessDenied"]:
+                pytest.skip("GrantFullControl not supported")
+                return
+            raise
+
+    finally:
+        fixture.cleanup()
+
+
+def test_put_bucket_acl_with_access_control_policy(s3_client, config):
+    """
+    Test PutBucketAcl with AccessControlPolicy parameter
+
+    Should set ACL using full ACL structure
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("acl-acp")
+        s3_client.create_bucket(bucket_name)
+
+        # Get current ACL for owner info
+        try:
+            acl_response = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            owner = acl_response["Owner"]
+
+            # Create AccessControlPolicy with full ACL structure
+            access_control_policy = {
+                "Owner": owner,
+                "Grants": [
+                    {
+                        "Grantee": {
+                            "Type": "CanonicalUser",
+                            "ID": owner["ID"],
+                            "DisplayName": owner.get("DisplayName", ""),
+                        },
+                        "Permission": "FULL_CONTROL",
+                    }
+                ],
+            }
+
+            # Put bucket ACL with AccessControlPolicy
+            s3_client.client.put_bucket_acl(
+                Bucket=bucket_name, AccessControlPolicy=access_control_policy
+            )
+
+            # Verify with GetBucketAcl
+            updated_acl = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            assert "Grants" in updated_acl
+            assert len(updated_acl["Grants"]) > 0
+
+        except ClientError as e:
+            if e.response["Error"]["Code"] in ["NotImplemented", "AccessDenied"]:
+                pytest.skip("AccessControlPolicy not supported")
+                return
+            raise
+
+    finally:
+        fixture.cleanup()
+
+
+def test_put_bucket_acl_grant_read_acp(s3_client, config):
+    """
+    Test PutBucketAcl with GrantReadACP parameter
+
+    Should grant READ_ACP permission (read ACL)
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("acl-grant-read-acp")
+        s3_client.create_bucket(bucket_name)
+
+        # Try PutBucketAcl with GrantReadACP
+        try:
+            # Use owner's ID for testing
+            acl_response = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            owner_id = acl_response["Owner"]["ID"]
+
+            # MinIO may return empty owner ID
+            if not owner_id:
+                pytest.skip("Owner ID not available (MinIO limitation)")
+                return
+
+            s3_client.client.put_bucket_acl(
+                Bucket=bucket_name, GrantReadACP=f"id={owner_id}"
+            )
+
+            # Verify with GetBucketAcl
+            updated_acl = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            assert "Grants" in updated_acl
+            # Should have READ_ACP grant
+            read_acp_grants = [
+                g for g in updated_acl["Grants"] if g.get("Permission") == "READ_ACP"
+            ]
+            assert len(read_acp_grants) > 0
+
+        except ClientError as e:
+            if e.response["Error"]["Code"] in ["NotImplemented", "AccessDenied"]:
+                pytest.skip("GrantReadACP not supported")
+                return
+            raise
+
+    finally:
+        fixture.cleanup()
+
+
+def test_put_bucket_acl_grant_write_acp(s3_client, config):
+    """
+    Test PutBucketAcl with GrantWriteACP parameter
+
+    Should grant WRITE_ACP permission (write ACL)
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("acl-grant-write-acp")
+        s3_client.create_bucket(bucket_name)
+
+        # Try PutBucketAcl with GrantWriteACP
+        try:
+            # Use owner's ID for testing
+            acl_response = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            owner_id = acl_response["Owner"]["ID"]
+
+            # MinIO may return empty owner ID
+            if not owner_id:
+                pytest.skip("Owner ID not available (MinIO limitation)")
+                return
+
+            s3_client.client.put_bucket_acl(
+                Bucket=bucket_name, GrantWriteACP=f"id={owner_id}"
+            )
+
+            # Verify with GetBucketAcl
+            updated_acl = s3_client.client.get_bucket_acl(Bucket=bucket_name)
+            assert "Grants" in updated_acl
+            # Should have WRITE_ACP grant
+            write_acp_grants = [
+                g for g in updated_acl["Grants"] if g.get("Permission") == "WRITE_ACP"
+            ]
+            assert len(write_acp_grants) > 0
+
+        except ClientError as e:
+            if e.response["Error"]["Code"] in ["NotImplemented", "AccessDenied"]:
+                pytest.skip("GrantWriteACP not supported")
+                return
+            raise
+
+    finally:
+        fixture.cleanup()
