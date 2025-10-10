@@ -14,11 +14,25 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 380 | 64.2% |
-| **Remaining** | 212 | 35.8% |
+| **Ported** | 390 | 65.9% |
+| **Remaining** | 202 | 34.1% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (380 tests across 37 files)
+## Ported Tests (390 tests across 38 files)
+
+### ✅ test_put_bucket_tagging.py (10 tests)
+Tests PutBucketTagging, GetBucketTagging, and DeleteBucketTagging API operations.
+
+- `test_put_bucket_tagging_non_existing_bucket` - NoSuchBucket for non-existing bucket
+- `test_put_bucket_tagging_long_tags` - Tag key max 128 chars, value max 256 chars (MalformedXML)
+- `test_put_bucket_tagging_duplicate_keys` - Duplicate keys rejected (MalformedXML)
+- `test_put_bucket_tagging_tag_count_limit` - Maximum 50 tags per bucket (MalformedXML)
+- `test_put_bucket_tagging_success` - Set and retrieve bucket tags
+- `test_put_bucket_tagging_success_status` - HTTP 200/204 status code
+- `test_get_bucket_tagging_non_existing_bucket` - MinIO returns NoSuchTagSet instead of NoSuchBucket
+- `test_get_bucket_tagging_no_tags` - NoSuchTagSet for bucket with no tags
+- `test_delete_bucket_tagging_success` - Remove all tags from bucket
+- `test_put_bucket_tagging_update` - PutBucketTagging replaces all existing tags
 
 ### ✅ test_get_object_attributes.py (10 tests)
 Tests GetObjectAttributes API operations.
@@ -577,7 +591,7 @@ High-value categories to port next (ordered by priority):
 | **PreflightOPTIONS** | 7 | LOW | CORS preflight |
 | **ListBuckets** | 7 | LOW | Bucket listing |
 | **PutObjectLegalHold** | 6 | LOW | Legal hold operations |
-| **PutBucketTagging** | 6 | LOW | Bucket tagging |
+| **PutBucketTagging** | 0 | LOW | Bucket tagging (10/6 ported - exceeded!) |
 | **PutBucketCors** | 6 | LOW | CORS configuration |
 
 ### Not Implemented Tests (~80 tests)
@@ -639,7 +653,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.7% (375/380 tests)
+- **Current Pass Rate**: 98.7% (385/390 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -680,7 +694,32 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
 
-**🎉 MILESTONE: 60% Complete! 🎉**
+**🎉 MILESTONE: 65% Complete! 🎉**
+
+**Batch 30 (2025-10-10)**: Added 10 tests - **REACHED 65.9%!**
+- **test_put_bucket_tagging.py**: 10 PutBucketTagging tests (100% pass rate)
+- PutBucketTagging operations:
+  - PutBucketTagging on non-existing bucket (NoSuchBucket)
+  - Tag validation (key max 128 chars, value max 256 chars)
+  - Duplicate key detection (keys must be unique)
+  - Tag count limit (maximum 50 tags per bucket)
+  - Successful tag setting and retrieval
+  - HTTP 200/204 status codes
+- GetBucketTagging operations:
+  - GetBucketTagging on non-existing bucket
+  - NoSuchTagSet for buckets with no tags
+  - Tag retrieval and verification
+- DeleteBucketTagging:
+  - Remove all tags from bucket
+  - Verify tags are gone with GetBucketTagging
+- Tag update behavior:
+  - PutBucketTagging replaces all existing tags (not merge)
+  - Previous tags removed when setting new tags
+- MinIO compatibility notes:
+  - MinIO returns MalformedXML for all tag validation errors
+  - GetBucketTagging on non-existing bucket returns NoSuchTagSet (not NoSuchBucket)
+  - Tag limits and validation work correctly in MinIO
+- Note: PutBucketTagging tests now exceed estimate! (10 ported vs 6 estimated)
 
 **Batch 29 (2025-10-10)**: Added 10 tests - **REACHED 64.2%!**
 - **test_get_object_attributes.py**: 10 GetObjectAttributes tests (100% pass rate)
