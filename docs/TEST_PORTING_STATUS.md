@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 142 | 24.0% |
-| **Remaining** | 450 | 76.0% |
+| **Ported** | 152 | 25.7% |
+| **Remaining** | 440 | 74.3% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (142 tests across 14 files)
+## Ported Tests (152 tests across 15 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -218,6 +218,20 @@ Tests CopyObject edge cases and error conditions.
 - `test_copy_object_large_object` - Large object (1MB) copy
 - `test_copy_object_returns_etag` - ETag in response
 
+### ✅ test_delete_objects.py (10 tests)
+Tests DeleteObjects (batch delete) API operations.
+
+- `test_delete_objects_success` - Batch delete with mixed objects
+- `test_delete_objects_empty_input` - Non-existing key deletion (idempotent)
+- `test_delete_objects_non_existing_objects` - Multiple non-existing keys
+- `test_delete_objects_mixed_existing_non_existing` - Mixed existing/non-existing
+- `test_delete_objects_non_existing_bucket` - NoSuchBucket error
+- `test_delete_objects_returns_deleted_list` - Deleted list in response
+- `test_delete_objects_quiet_mode` - Quiet mode behavior
+- `test_delete_objects_with_special_characters` - Special chars in keys
+- `test_delete_objects_large_batch` - Large batch (100 objects)
+- `test_delete_objects_response_status` - HTTP 200 status
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -314,7 +328,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 96.5% (137/142 tests)
+- **Current Pass Rate**: 96.7% (147/152 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -354,6 +368,9 @@ Last Updated: 2025-10-09
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 7 (2025-10-09)**: Added 10 tests
+- **test_delete_objects.py**: 10 DeleteObjects batch delete tests (100% pass rate)
 
 **Batch 6 (2025-10-09)**: Added 10 tests
 - **test_copy_object_edge_cases.py**: 10 CopyObject edge case tests (100% pass rate)
