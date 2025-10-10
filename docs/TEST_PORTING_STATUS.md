@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 214 | 36.1% |
-| **Remaining** | 378 | 63.9% |
+| **Ported** | 224 | 37.8% |
+| **Remaining** | 368 | 62.2% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (214 tests across 20 files)
+## Ported Tests (224 tests across 21 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -314,6 +314,20 @@ Tests UploadPart API edge cases and error handling.
 - `test_upload_part_response_metadata` - Response structure validation
 - `test_upload_part_after_abort` - NoSuchUpload after abort
 
+### ✅ test_complete_multipart.py (10 tests)
+Tests CompleteMultipartUpload API validations and edge cases.
+
+- `test_complete_multipart_upload_incorrect_part_number` - InvalidPart for mismatched part numbers
+- `test_complete_multipart_upload_invalid_etag` - InvalidPart for wrong ETag
+- `test_complete_multipart_upload_small_upload_size` - EntityTooSmall for parts < 5MB
+- `test_complete_multipart_upload_empty_parts` - MalformedXML/InvalidRequest for empty parts list
+- `test_complete_multipart_upload_incorrect_parts_order` - InvalidPartOrder for unsorted parts
+- `test_complete_multipart_upload_invalid_part_number_negative` - InvalidArgument for negative part numbers
+- `test_complete_multipart_upload_success` - Full multipart upload with content verification
+- `test_complete_multipart_upload_non_existing_upload_id` - NoSuchUpload error
+- `test_complete_multipart_upload_after_abort` - NoSuchUpload after abort
+- `test_complete_multipart_upload_single_part` - Single part multipart upload
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -410,7 +424,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 97.7% (209/214 tests)
+- **Current Pass Rate**: 97.8% (219/224 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -450,6 +464,14 @@ Last Updated: 2025-10-10
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 13 (2025-10-10)**: Added 10 tests
+- **test_complete_multipart.py**: 10 CompleteMultipartUpload tests (100% pass rate)
+- Part number and ETag validation
+- Parts ordering requirements (must be ascending)
+- 5MB minimum part size enforcement
+- Empty parts handling
+- Full upload workflow with SHA256 content verification
 
 **Batch 12 (2025-10-10)**: Added 10 tests
 - **test_upload_part.py**: 10 UploadPart API tests (100% pass rate)
