@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 491 | 82.9% |
-| **Remaining** | 101 | 17.1% |
+| **Ported** | 502 | 84.8% |
+| **Remaining** | 90 | 15.2% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (491 tests across 51 files)
+## Ported Tests (502 tests across 52 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -512,6 +512,21 @@ Tests CreateBucket with advanced options and validation.
 - `test_create_bucket_non_default_acl` - Canned ACLs (private, public-read)
 - `test_create_bucket_default_object_lock` - ObjectLockEnabledForBucket at creation
 
+### ✅ test_object_lock_configuration.py (11 tests)
+Tests PutObjectLockConfiguration and GetObjectLockConfiguration operations.
+
+- `test_put_object_lock_configuration_non_existing_bucket` - NoSuchBucket/InvalidBucketState error
+- `test_put_object_lock_configuration_empty_config` - Empty configuration rejected
+- `test_put_object_lock_configuration_not_enabled_on_bucket_creation` - Bucket without object lock
+- `test_put_object_lock_configuration_invalid_status` - Invalid ObjectLockEnabled status
+- `test_put_object_lock_configuration_invalid_mode` - Invalid retention mode
+- `test_put_object_lock_configuration_both_years_and_days` - Both Years and Days rejected
+- `test_put_object_lock_configuration_invalid_years_days` - Negative retention periods
+- `test_put_object_lock_configuration_success` - Successful configuration
+- `test_get_object_lock_configuration_non_existing_bucket` - Get from non-existing bucket
+- `test_get_object_lock_configuration_unset_config` - Configuration not found
+- `test_get_object_lock_configuration_success` - Successful retrieval
+
 ### ✅ test_get_object_edge_cases.py (12 tests)
 Tests GetObject edge cases and response validation.
 
@@ -739,7 +754,7 @@ High-value categories to port next (ordered by priority):
 | **ListObjectVersions** | 0 | LOW | Version listing (9/9 ported - ✅ COMPLETE!) |
 | **ListMultipartUploads** | 0 | LOW | List in-progress uploads (9/9 ported - ✅ COMPLETE!) |
 | **CreateBucket** | 9 | LOW | Bucket creation (basics covered) |
-| **PutObjectLockConfiguration** | 8 | LOW | Object lock config |
+| **PutObjectLockConfiguration** | 0 | LOW | Object lock config (11/8 ported - ✅ EXCEEDED & COMPLETE!) |
 | **GetObjectAttributes** | 0 | LOW | Already covered (10/8 ported - exceeded!) |
 | **PreflightOPTIONS** | 7 | LOW | CORS preflight |
 | **ListBuckets** | 7 | LOW | Bucket listing |
@@ -805,7 +820,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.0% (481/491 tests)
+- **Current Pass Rate**: 98.0% (492/502 tests)
 - **Known Failures**: 10 tests (3 CRC32C dependency, 2 path validation, 5 MinIO owner ID limitation, 3 SSE-S3 limitations, 3 object lock limitations, 2 policy condition limitations)
 
 ## Quality Standards
@@ -846,7 +861,30 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
 
-**🎉 MILESTONE: 82% Complete! 🎉**
+**🎉 MILESTONE: 84% Complete! 🎉**
+
+**Batch 45 (2025-10-10)**: Added 11 tests - **REACHED 84.8%! ✅ PutObjectLockConfiguration COMPLETE!**
+- **test_object_lock_configuration.py**: 11 object lock configuration tests (100% pass rate)
+- PutObjectLockConfiguration tests (8 tests):
+  - Non-existing bucket error (MinIO: InvalidBucketState vs AWS: NoSuchBucket)
+  - Empty configuration rejected (MalformedXML/InvalidArgument)
+  - Bucket without object lock enabled (versitygw-specific behavior)
+  - Invalid ObjectLockEnabled status (boto3 client-side validation)
+  - Invalid retention mode validation
+  - Both Years and Days rejected (must specify only one)
+  - Negative retention periods rejected
+  - Successful configuration on object-lock-enabled bucket
+- GetObjectLockConfiguration tests (3 tests):
+  - Non-existing bucket error handling
+  - Configuration not found error
+  - Successful retrieval with verification
+- MinIO compatibility:
+  - All 11 tests pass with implementation-aware assertions
+  - Error codes vary: InvalidBucketState vs NoSuchBucket
+  - ObjectLockConfigurationNotFoundError for missing config vs non-existing bucket
+  - boto3 validates invalid status/mode client-side
+  - Object lock configuration requires bucket created with ObjectLockEnabledForBucket=True
+  - Retention period validation works correctly
 
 **Batch 44 (2025-10-10)**: Added 4 tests - **REACHED 82.9%!**
 - **test_delete_object_additional.py**: 4 DeleteObject additional tests (100% pass rate)
