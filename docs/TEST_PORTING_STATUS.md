@@ -14,11 +14,38 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 293 | 49.5% |
-| **Remaining** | 299 | 50.5% |
+| **Ported** | 312 | 52.7% |
+| **Remaining** | 280 | 47.3% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (293 tests across 27 files)
+## Ported Tests (312 tests across 29 files)
+
+### ✅ test_list_object_versions.py (8 tests)
+Tests ListObjectVersions API for retrieving object version history.
+
+- `test_list_object_versions_non_existing_bucket` - NoSuchBucket for non-existing bucket
+- `test_list_object_versions_list_single_object_versions` - List all versions of single object
+- `test_list_object_versions_list_multiple_object_versions` - List versions across multiple objects
+- `test_list_object_versions_multiple_object_versions_truncated` - Pagination with MaxKeys, KeyMarker, VersionIdMarker
+- `test_list_object_versions_with_delete_markers` - Versions and DeleteMarkers fields in response
+- `test_list_object_versions_containing_null_version_id_obj` - Complex null version scenario (suspended/re-enabled)
+- `test_list_object_versions_single_null_version_id_object` - Null version created before versioning enabled
+- `test_list_object_versions_checksum` - ListObjectVersions with checksum-enabled objects
+
+### ✅ test_put_object_conditionals.py (11 tests)
+Tests PutObject with conditional writes and invalid object names.
+
+- `test_put_object_if_match_success` - If-Match with matching ETag succeeds
+- `test_put_object_if_match_fails` - If-Match with wrong ETag returns PreconditionFailed
+- `test_put_object_if_none_match_success` - If-None-Match with non-matching ETag succeeds
+- `test_put_object_if_none_match_fails` - If-None-Match with matching ETag returns PreconditionFailed
+- `test_put_object_if_match_and_if_none_match` - Both conditionals evaluated together
+- `test_put_object_conditional_on_new_object` - Conditional behavior on non-existing objects
+- `test_put_object_invalid_object_names_path_traversal` - Path traversal attempts rejected
+- `test_put_object_concurrent_updates` - Multiple concurrent updates (last write wins)
+- `test_put_object_empty_key_rejected` - boto3 validates empty key client-side
+- `test_put_object_very_long_key` - Keys >1024 bytes return KeyTooLongError
+- `test_put_object_replace_with_different_content_type` - ContentType can be changed on update
 
 ### ✅ test_copy_object_directives.py (11 tests)
 Tests CopyObject with metadata/tagging directives and edge cases.
@@ -427,10 +454,10 @@ High-value categories to port next (ordered by priority):
 
 | Category | Count | Priority | Notes |
 |----------|-------|----------|-------|
-| **Versioning** | 28 | HIGH | Object versioning (23/51 ported) |
+| **Versioning** | 20 | HIGH | Object versioning (31/51 ported) |
 | **CopyObject** | 7 | HIGH | Additional copy scenarios (29/26 ported - exceeded!) |
 | **CompleteMultipartUpload** | 24 | HIGH | Multipart completion with checksums |
-| **PutObject** | 13 | HIGH | Additional put scenarios (basic covered) |
+| **PutObject** | 2 | HIGH | Additional put scenarios (35/25 ported - exceeded!) |
 | **PresignedAuth** | 24 | MEDIUM | Presigned URL authentication |
 | **Authentication** | 22 | MEDIUM | Authentication edge cases |
 | **GetObject** | 18 | MEDIUM | Additional get scenarios |
@@ -442,7 +469,7 @@ High-value categories to port next (ordered by priority):
 | **PutObjectRetention** | 11 | MEDIUM | Object retention policies |
 | **AccessControl** | 11 | MEDIUM | Access control integration |
 | **DeleteObject** | 10 | LOW | Deletion edge cases |
-| **ListObjectVersions** | 9 | LOW | Version listing |
+| **ListObjectVersions** | 1 | LOW | Version listing (8/9 ported) |
 | **ListMultipartUploads** | 9 | LOW | List in-progress uploads |
 | **CreateBucket** | 9 | LOW | Bucket creation (basics covered) |
 | **PutObjectLockConfiguration** | 8 | LOW | Object lock config |
@@ -512,7 +539,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.3% (288/293 tests)
+- **Current Pass Rate**: 98.4% (307/312 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -552,6 +579,45 @@ Last Updated: 2025-10-10
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**🎉 MILESTONE: 50% Complete! 🎉**
+
+**Batch 21 (2025-10-10)**: Added 8 tests - **REACHED 52.7%!**
+- **test_list_object_versions.py**: 8 ListObjectVersions API tests (100% pass rate)
+- ListObjectVersions pagination:
+  - MaxKeys parameter with IsTruncated flag
+  - KeyMarker and VersionIdMarker for pagination
+  - NextKeyMarker and NextVersionIdMarker in response
+- Version listing features:
+  - Single object with multiple versions (newest first order)
+  - Multiple objects with versions (key grouping)
+  - Versions and DeleteMarkers fields in response
+- Null version handling:
+  - Objects created before versioning enabled (VersionId="null")
+  - Suspended versioning null version behavior
+  - Complex scenario: versioning enabled → suspended → re-enabled
+- Checksum compatibility:
+  - ListObjectVersions works with checksum-enabled objects
+  - MinIO may not include checksum fields in listing (implementation-specific)
+- Note: ListObjectVersions category nearly complete! (8/9 ported)
+
+**Batch 20 (2025-10-10)**: Added 11 tests - **REACHED 51.4%!**
+- **test_put_object_conditionals.py**: 11 PutObject conditional write tests (100% pass rate)
+- Conditional write headers:
+  - If-Match: succeeds when ETag matches, fails with PreconditionFailed otherwise
+  - If-None-Match: succeeds when ETag doesn't match, fails with PreconditionFailed when matches
+  - Both conditionals: If-None-Match takes precedence when both present
+- Conditional behavior differences:
+  - AWS S3: ignores conditionals for non-existing objects (allows create)
+  - MinIO: enforces conditionals even for new objects (returns NoSuchKey)
+- Invalid object name validation:
+  - Path traversal attempts (., .., ../, etc.) rejected
+  - MinIO returns XMinioInvalidResourceName or XMinioInvalidObjectName
+  - Empty key rejected by boto3 client-side (ParamValidationError)
+  - Keys >1024 bytes return KeyTooLongError
+- Concurrent update behavior (last write wins)
+- ContentType replacement on object update
+- Note: PutObject tests now exceed estimate! (35 tests ported vs 25 estimated)
 
 **Batch 19 (2025-10-10)**: Added 11 tests
 - **test_copy_object_directives.py**: 11 CopyObject directive and edge case tests (100% pass rate)
