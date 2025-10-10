@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 57 | 9.6% |
-| **Remaining** | 535 | 90.4% |
+| **Ported** | 85 | 14.4% |
+| **Remaining** | 507 | 85.6% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (57 tests across 6 files)
+## Ported Tests (85 tests across 9 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -100,6 +100,46 @@ Tests HTTP conditional request headers (If-Match, If-None-Match, If-Modified-Sin
 - `test_copy_object_if_none_match_fails` - CopySourceIfNoneMatch with matching ETag
 - `test_copy_object_if_modified_since_success` - CopySourceIfModifiedSince success
 - `test_copy_object_if_unmodified_since_fails` - CopySourceIfUnmodifiedSince fails
+
+### ✅ test_head_object_edge_cases.py (10 tests)
+Tests HeadObject edge cases with range requests and metadata.
+
+- `test_head_object_non_existing_object` - NotFound (404) for missing object
+- `test_head_object_with_range_valid` - Valid byte ranges with Content-Range headers
+- `test_head_object_with_range_beyond_object` - Ranges trimmed to object boundaries
+- `test_head_object_with_range_invalid` - Invalid ranges return full object
+- `test_head_object_with_range_not_satisfiable` - Unsatisfiable ranges return 416
+- `test_head_object_success` - Basic HeadObject with all metadata
+- `test_head_object_with_metadata` - Custom metadata retrieval
+- `test_head_object_content_headers` - ContentType, ContentEncoding, etc.
+- `test_head_object_etag` - ETag consistency with PutObject
+- `test_head_object_last_modified` - LastModified timestamp validation
+
+### ✅ test_get_object_range.py (10 tests)
+Tests GetObject with Range header for partial content retrieval.
+
+- `test_get_object_with_range_basic` - Basic byte range (bytes=0-9)
+- `test_get_object_with_range_middle` - Range in middle of object
+- `test_get_object_with_range_suffix` - Suffix range (bytes=-10)
+- `test_get_object_with_range_open_ended` - Open-ended range (bytes=50-)
+- `test_get_object_with_range_entire_object` - Full object with range (bytes=0-)
+- `test_get_object_with_range_beyond_object` - Range beyond object trimmed
+- `test_get_object_with_range_not_satisfiable` - Unsatisfiable range returns error
+- `test_get_object_with_range_single_byte` - Single byte retrieval (bytes=0-0)
+- `test_get_object_with_range_last_byte` - Last byte with suffix (bytes=-1)
+- `test_get_object_range_data_integrity` - Data integrity verification with known pattern
+
+### ✅ test_delete_object.py (8 tests)
+Tests DeleteObject edge cases and idempotency.
+
+- `test_delete_object_success` - Basic delete operation
+- `test_delete_object_non_existing` - Deleting non-existing object succeeds (idempotent)
+- `test_delete_object_twice` - Double deletion succeeds
+- `test_delete_object_directory_object_noslash` - Directory/file name distinctions
+- `test_delete_object_non_empty_directory` - Deleting 'dir/' doesn't delete 'dir/file'
+- `test_delete_object_with_special_characters` - Special characters in keys
+- `test_delete_object_returns_delete_marker` - DeleteMarker field in response
+- `test_delete_object_response_status` - HTTP status code validation
 
 ## Remaining Tests by Category
 
@@ -197,7 +237,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 91.2% (52/57 tests)
+- **Current Pass Rate**: 94.1% (80/85 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -236,7 +276,12 @@ When porting additional tests:
 Last Updated: 2025-10-09
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
-## Recent Additions (Latest Batch)
+## Recent Additions (Latest Batches)
+
+**Batch 3 (2025-10-09)**: Added 28 tests across 3 files
+- **test_head_object_edge_cases.py**: 10 HeadObject edge case tests (100% pass rate)
+- **test_get_object_range.py**: 10 GetObject range request tests (100% pass rate)
+- **test_delete_object.py**: 8 DeleteObject edge case tests (100% pass rate)
 
 **Batch 2 (2025-10-09)**: Added 22 tests across 2 files
 - **test_multipart_upload.py**: 8 multipart upload tests (100% pass rate)
