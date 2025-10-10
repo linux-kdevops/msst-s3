@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 107 | 18.1% |
-| **Remaining** | 485 | 81.9% |
+| **Ported** | 132 | 22.3% |
+| **Remaining** | 460 | 77.7% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (107 tests across 11 files)
+## Ported Tests (132 tests across 13 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -171,6 +171,39 @@ Tests object tagging operations (Put/Get/Delete).
 - `test_object_tagging_with_special_characters` - Special chars in tag values
 - `test_object_tagging_multiple_operations` - Multiple tag operations
 
+### ✅ test_bucket_operations.py (13 tests)
+Tests bucket-level operations (Create/Delete/Head/List).
+
+- `test_create_bucket_success` - Basic bucket creation
+- `test_create_bucket_already_exists` - BucketAlreadyExists error
+- `test_head_bucket_success` - HeadBucket on existing bucket
+- `test_head_bucket_non_existing` - NotFound (404) for missing bucket
+- `test_delete_bucket_success` - Bucket deletion
+- `test_delete_bucket_non_existing` - NoSuchBucket error
+- `test_delete_bucket_not_empty` - BucketNotEmpty error
+- `test_list_buckets_success` - ListBuckets operation
+- `test_list_buckets_empty` - Empty bucket list
+- `test_get_bucket_location_success` - GetBucketLocation operation
+- `test_get_bucket_location_non_existing` - NoSuchBucket error
+- `test_create_delete_bucket_lifecycle` - Complete lifecycle test
+- `test_bucket_operations_case_sensitivity` - Bucket name case sensitivity
+
+### ✅ test_get_object_edge_cases.py (12 tests)
+Tests GetObject edge cases and response validation.
+
+- `test_get_object_non_existing_key` - NoSuchKey error
+- `test_get_object_success` - Basic retrieval
+- `test_get_object_directory_object_noslash` - Directory/file distinctions
+- `test_get_object_zero_length` - Empty object retrieval
+- `test_get_object_with_metadata` - Metadata in response
+- `test_get_object_with_content_type` - ContentType preservation
+- `test_get_object_returns_etag` - ETag consistency
+- `test_get_object_returns_last_modified` - LastModified timestamp
+- `test_get_object_content_length` - ContentLength accuracy
+- `test_get_object_large_object` - Large object (1MB) retrieval
+- `test_get_object_with_cache_control` - Cache-Control header
+- `test_get_object_response_status` - HTTP 200 status
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -267,7 +300,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 95.3% (102/107 tests)
+- **Current Pass Rate**: 96.2% (127/132 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -307,6 +340,10 @@ Last Updated: 2025-10-09
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 5 (2025-10-09)**: Added 25 tests across 2 files
+- **test_bucket_operations.py**: 13 bucket operation tests (100% pass rate)
+- **test_get_object_edge_cases.py**: 12 GetObject edge case tests (100% pass rate)
 
 **Batch 4 (2025-10-09)**: Added 22 tests across 2 files
 - **test_put_object_edge_cases.py**: 12 PutObject edge case tests (100% pass rate)
