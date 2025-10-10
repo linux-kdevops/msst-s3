@@ -14,11 +14,25 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 370 | 62.5% |
-| **Remaining** | 222 | 37.5% |
+| **Ported** | 380 | 64.2% |
+| **Remaining** | 212 | 35.8% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (370 tests across 36 files)
+## Ported Tests (380 tests across 37 files)
+
+### ✅ test_get_object_attributes.py (10 tests)
+Tests GetObjectAttributes API operations.
+
+- `test_get_object_attributes_non_existing_bucket` - NoSuchBucket for non-existing bucket
+- `test_get_object_attributes_non_existing_object` - NoSuchKey for non-existing object
+- `test_get_object_attributes_invalid_attrs` - InvalidArgument for invalid attribute name
+- `test_get_object_attributes_invalid_parent` - NoSuchKey for nested object with file parent
+- `test_get_object_attributes_invalid_single_attribute` - InvalidArgument for single invalid attribute
+- `test_get_object_attributes_empty_attrs` - InvalidArgument for empty attributes list
+- `test_get_object_attributes_existing_object` - Returns ETag, ObjectSize, StorageClass, LastModified
+- `test_get_object_attributes_checksums` - Checksum information with various algorithms
+- `test_get_object_attributes_response_fields` - Verify response structure and field types
+- `test_get_object_attributes_multipart_object` - ObjectParts information for multipart objects
 
 ### ✅ test_put_bucket_acl.py (10 tests)
 Tests PutBucketAcl and GetBucketAcl API operations.
@@ -559,7 +573,7 @@ High-value categories to port next (ordered by priority):
 | **ListMultipartUploads** | 9 | LOW | List in-progress uploads |
 | **CreateBucket** | 9 | LOW | Bucket creation (basics covered) |
 | **PutObjectLockConfiguration** | 8 | LOW | Object lock config |
-| **GetObjectAttributes** | 8 | LOW | Already partially covered |
+| **GetObjectAttributes** | 0 | LOW | Already covered (10/8 ported - exceeded!) |
 | **PreflightOPTIONS** | 7 | LOW | CORS preflight |
 | **ListBuckets** | 7 | LOW | Bucket listing |
 | **PutObjectLegalHold** | 6 | LOW | Legal hold operations |
@@ -625,7 +639,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.6% (365/370 tests)
+- **Current Pass Rate**: 98.7% (375/380 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -667,6 +681,32 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 60% Complete! 🎉**
+
+**Batch 29 (2025-10-10)**: Added 10 tests - **REACHED 64.2%!**
+- **test_get_object_attributes.py**: 10 GetObjectAttributes tests (100% pass rate)
+- GetObjectAttributes operations:
+  - GetObjectAttributes on non-existing bucket (NoSuchBucket)
+  - GetObjectAttributes on non-existing object (NoSuchKey)
+  - Invalid attribute validation (InvalidArgument/InvalidRequest)
+  - Empty attributes list (InvalidArgument - at least one required)
+  - Invalid parent directory (NoSuchKey for nested object with file parent)
+- Attribute retrieval:
+  - ETag: Returns object's ETag (without quotes)
+  - ObjectSize: Returns object size in bytes
+  - StorageClass: Returns storage class (STANDARD)
+  - LastModified: Returns last modification timestamp
+  - Checksum: Returns checksum information when available
+  - ObjectParts: Returns part information for multipart objects (TotalPartsCount)
+- Response validation:
+  - Verify response structure and field types
+  - ETag matches PutObject response (stripped of quotes)
+  - ObjectSize matches actual data length
+  - StorageClass defaults to STANDARD
+- Multipart object support:
+  - ObjectParts attribute shows TotalPartsCount
+  - Works with completed multipart uploads
+  - MinIO may not fully support all ObjectParts fields
+- Note: GetObjectAttributes tests now exceed estimate! (10 ported vs 8 estimated)
 
 **Batch 28 (2025-10-10)**: Added 10 tests - **REACHED 62.5%!**
 - **test_put_bucket_acl.py**: 10 PutBucketAcl and GetBucketAcl tests (8 passed, 2 skipped)
