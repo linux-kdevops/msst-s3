@@ -1,292 +1,551 @@
 #!/usr/bin/env python3
 """
-Test: Conditional Request Headers
-Tests If-Match, If-None-Match, If-Modified-Since, If-Unmodified-Since conditions
+S3 Conditional Request Tests
+
+Tests HTTP conditional request headers for S3 operations:
+- If-Match / If-None-Match (ETag-based)
+- If-Modified-Since / If-Unmodified-Since (time-based)
+- HeadObject conditional reads
+- GetObject conditional reads
+- CopyObject conditional operations
+
+Ported from versitygw integration tests.
+
+Generated-by: Claude AI
+Signed-off-by: Luis Chamberlain <mcgrof@kernel.org>
 """
 
+import pytest
+from datetime import datetime, timedelta, timezone
+import time
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from common.s3_client import S3Client
-from common.test_utils import random_string
-import io
-import time
-from datetime import datetime, timedelta, timezone
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-def test_conditional_requests(s3_client: S3Client):
-    """Test conditional request headers"""
-    bucket_name = f's3-conditional-{random_string(8).lower()}'
+from tests.common.fixtures import TestFixture
+from botocore.exceptions import ClientError
+
+
+def test_head_object_if_match_success(s3_client, config):
+    """
+    Test HeadObject with If-Match header (matching ETag)
+
+    Should return object metadata when ETag matches
+    """
+    fixture = TestFixture(s3_client, config)
 
     try:
+        bucket_name = fixture.generate_bucket_name('head-if-match')
         s3_client.create_bucket(bucket_name)
-        results = {'passed': [], 'failed': []}
 
-        # Create test object
-        key = 'conditional-test'
-        test_data = b'original data'
-        response = s3_client.client.put_object(
+        key = 'test-object'
+        data = fixture.generate_random_data(100)
+
+        # Create object
+        put_response = s3_client.put_object(bucket_name, key, data)
+        etag = put_response['ETag']
+
+        # HeadObject with matching ETag
+        head_response = s3_client.client.head_object(
             Bucket=bucket_name,
             Key=key,
-            Body=test_data
+            IfMatch=etag
         )
-        original_etag = response['ETag']
 
-        # Wait a moment to ensure timestamp difference
-        time.sleep(1)
-
-        # Get object metadata
-        head = s3_client.client.head_object(Bucket=bucket_name, Key=key)
-        last_modified = head['LastModified']
-
-        # Test 1: If-Match with correct ETag
-        print("Test 1: If-Match with correct ETag")
-        try:
-            response = s3_client.client.get_object(
-                Bucket=bucket_name,
-                Key=key,
-                IfMatch=original_etag
-            )
-            if response['Body'].read() == test_data:
-                results['passed'].append('If-Match success')
-                print("✓ If-Match: Retrieved with matching ETag")
-        except Exception as e:
-            results['failed'].append(f'If-Match correct: {str(e)}')
-
-        # Test 2: If-Match with wrong ETag
-        print("\nTest 2: If-Match with wrong ETag")
-        try:
-            response = s3_client.client.get_object(
-                Bucket=bucket_name,
-                Key=key,
-                IfMatch='"wrong-etag"'
-            )
-            results['failed'].append('Wrong If-Match: Should have failed')
-            print("✗ Wrong If-Match: Retrieved (should fail)")
-        except Exception as e:
-            if '412' in str(e) or 'PreconditionFailed' in str(e):
-                results['passed'].append('Wrong If-Match rejected')
-                print("✓ Wrong If-Match: Correctly rejected with 412")
-            else:
-                results['failed'].append(f'Wrong If-Match: Wrong error')
-
-        # Test 3: If-None-Match with different ETag
-        print("\nTest 3: If-None-Match with different ETag")
-        try:
-            response = s3_client.client.get_object(
-                Bucket=bucket_name,
-                Key=key,
-                IfNoneMatch='"different-etag"'
-            )
-            if response['Body'].read() == test_data:
-                results['passed'].append('If-None-Match different')
-                print("✓ If-None-Match: Retrieved (ETags different)")
-        except Exception as e:
-            results['failed'].append(f'If-None-Match diff: {str(e)}')
-
-        # Test 4: If-None-Match with same ETag
-        print("\nTest 4: If-None-Match with same ETag")
-        try:
-            response = s3_client.client.get_object(
-                Bucket=bucket_name,
-                Key=key,
-                IfNoneMatch=original_etag
-            )
-            results['failed'].append('Same If-None-Match: Should return 304')
-            print("✗ Same If-None-Match: Retrieved (should return 304)")
-        except Exception as e:
-            if '304' in str(e) or 'NotModified' in str(e):
-                results['passed'].append('Same If-None-Match 304')
-                print("✓ Same If-None-Match: Correctly returned 304")
-            else:
-                # Some S3 implementations might not support this
-                results['passed'].append('If-None-Match handled')
-
-        # Test 5: If-Modified-Since with old date
-        print("\nTest 5: If-Modified-Since with old date")
-        old_date = last_modified - timedelta(days=1)
-        try:
-            response = s3_client.client.get_object(
-                Bucket=bucket_name,
-                Key=key,
-                IfModifiedSince=old_date
-            )
-            if response['Body'].read() == test_data:
-                results['passed'].append('If-Modified-Since old')
-                print("✓ If-Modified-Since: Retrieved (modified after date)")
-        except Exception as e:
-            results['failed'].append(f'If-Modified old: {str(e)}')
-
-        # Test 6: If-Modified-Since with future date
-        print("\nTest 6: If-Modified-Since with future date")
-        future_date = datetime.now(timezone.utc) + timedelta(days=1)
-        try:
-            response = s3_client.client.get_object(
-                Bucket=bucket_name,
-                Key=key,
-                IfModifiedSince=future_date
-            )
-            results['failed'].append('Future If-Modified: Should return 304')
-            print("✗ Future If-Modified: Retrieved (should return 304)")
-        except Exception as e:
-            if '304' in str(e) or 'NotModified' in str(e):
-                results['passed'].append('Future If-Modified 304')
-                print("✓ Future If-Modified: Correctly returned 304")
-            else:
-                results['passed'].append('If-Modified handled')
-
-        # Test 7: If-Unmodified-Since with future date
-        print("\nTest 7: If-Unmodified-Since with future date")
-        try:
-            response = s3_client.client.get_object(
-                Bucket=bucket_name,
-                Key=key,
-                IfUnmodifiedSince=future_date
-            )
-            if response['Body'].read() == test_data:
-                results['passed'].append('If-Unmodified future')
-                print("✓ If-Unmodified: Retrieved (not modified since)")
-        except Exception as e:
-            results['failed'].append(f'If-Unmodified future: {str(e)}')
-
-        # Test 8: If-Unmodified-Since with old date
-        print("\nTest 8: If-Unmodified-Since with old date")
-        try:
-            response = s3_client.client.get_object(
-                Bucket=bucket_name,
-                Key=key,
-                IfUnmodifiedSince=old_date
-            )
-            results['failed'].append('Old If-Unmodified: Should fail')
-            print("✗ Old If-Unmodified: Retrieved (should fail)")
-        except Exception as e:
-            if '412' in str(e) or 'PreconditionFailed' in str(e):
-                results['passed'].append('Old If-Unmodified 412')
-                print("✓ Old If-Unmodified: Correctly failed with 412")
-            else:
-                results['passed'].append('If-Unmodified handled')
-
-        # Test 9: Combined conditions
-        print("\nTest 9: Combined conditions")
-        try:
-            # Both conditions should pass
-            response = s3_client.client.get_object(
-                Bucket=bucket_name,
-                Key=key,
-                IfMatch=original_etag,
-                IfUnmodifiedSince=future_date
-            )
-            if response['Body'].read() == test_data:
-                results['passed'].append('Combined conditions')
-                print("✓ Combined: Both conditions satisfied")
-        except Exception as e:
-            results['failed'].append(f'Combined: {str(e)}')
-
-        # Test 10: Conflicting conditions
-        print("\nTest 10: Conflicting conditions")
-        try:
-            # If-Match passes but If-Unmodified-Since fails
-            response = s3_client.client.get_object(
-                Bucket=bucket_name,
-                Key=key,
-                IfMatch=original_etag,
-                IfUnmodifiedSince=old_date  # This should fail
-            )
-            results['failed'].append('Conflicting: Should fail')
-            print("✗ Conflicting: Retrieved (should fail)")
-        except Exception as e:
-            if '412' in str(e) or 'PreconditionFailed' in str(e):
-                results['passed'].append('Conflicting rejected')
-                print("✓ Conflicting: One condition failed, request rejected")
-            else:
-                results['passed'].append('Conflicting handled')
-
-        # Test 11: Conditional PUT
-        print("\nTest 11: Conditional PUT")
-        try:
-            # Update with correct ETag
-            new_data = b'updated data'
-            response = s3_client.client.put_object(
-                Bucket=bucket_name,
-                Key=key,
-                Body=new_data,
-                IfMatch=original_etag
-            )
-
-            # Verify update
-            obj = s3_client.client.get_object(Bucket=bucket_name, Key=key)
-            if obj['Body'].read() == new_data:
-                results['passed'].append('Conditional PUT')
-                print("✓ Conditional PUT: Updated with matching ETag")
-
-        except Exception as e:
-            results['failed'].append(f'Conditional PUT: {str(e)}')
-
-        # Test 12: Conditional DELETE
-        print("\nTest 12: Conditional DELETE")
-        delete_key = 'conditional-delete'
-        del_response = s3_client.client.put_object(
-            Bucket=bucket_name,
-            Key=delete_key,
-            Body=b'to delete'
-        )
-        del_etag = del_response['ETag']
-
-        try:
-            # Delete with wrong ETag (should fail)
-            s3_client.client.delete_object(
-                Bucket=bucket_name,
-                Key=delete_key,
-                IfMatch='"wrong-etag"'
-            )
-            results['failed'].append('Wrong conditional DELETE: Should fail')
-        except:
-            results['passed'].append('Wrong conditional DELETE rejected')
-            print("✓ Conditional DELETE: Wrong ETag rejected")
-
-        try:
-            # Delete with correct ETag
-            s3_client.client.delete_object(
-                Bucket=bucket_name,
-                Key=delete_key,
-                IfMatch=del_etag
-            )
-
-            # Verify deletion
-            try:
-                s3_client.client.head_object(Bucket=bucket_name, Key=delete_key)
-                results['failed'].append('Conditional DELETE: Object exists')
-            except:
-                results['passed'].append('Conditional DELETE success')
-                print("✓ Conditional DELETE: Deleted with matching ETag")
-
-        except Exception as e:
-            results['failed'].append(f'Conditional DELETE: {str(e)}')
-
-        # Summary
-        print(f"\n=== Conditional Requests Test Results ===")
-        print(f"Passed: {len(results['passed'])}")
-        print(f"Failed: {len(results['failed'])}")
-
-        return len(results['failed']) == 0
+        # Should succeed
+        assert head_response['ETag'] == etag
+        assert head_response['ContentLength'] == 100
 
     finally:
-        # Cleanup
-        try:
-            objects = s3_client.client.list_objects_v2(Bucket=bucket_name)
-            if 'Contents' in objects:
-                for obj in objects['Contents']:
-                    s3_client.client.delete_object(Bucket=bucket_name, Key=obj['Key'])
-            s3_client.delete_bucket(bucket_name)
-        except:
-            pass
+        fixture.cleanup()
 
-if __name__ == "__main__":
-    s3 = S3Client(
-        endpoint_url='http://localhost:9000',
-        access_key='minioadmin',
-        secret_key='minioadmin',
-        region='us-east-1',
-        verify_ssl=False
-    )
-    test_conditional_requests(s3)
+
+def test_head_object_if_match_fails(s3_client, config):
+    """
+    Test HeadObject with If-Match header (non-matching ETag)
+
+    Should return PreconditionFailed when ETag doesn't match
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('head-if-match-fail')
+        s3_client.create_bucket(bucket_name)
+
+        key = 'test-object'
+        data = fixture.generate_random_data(100)
+
+        # Create object
+        s3_client.put_object(bucket_name, key, data)
+
+        # HeadObject with non-matching ETag
+        wrong_etag = '"00000000000000000000000000000000"'
+
+        with pytest.raises(ClientError) as exc_info:
+            s3_client.client.head_object(
+                Bucket=bucket_name,
+                Key=key,
+                IfMatch=wrong_etag
+            )
+
+        error_code = exc_info.value.response['Error']['Code']
+        assert error_code == 'PreconditionFailed' or error_code == '412', \
+            f"Expected PreconditionFailed, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_head_object_if_none_match_returns_not_modified(s3_client, config):
+    """
+    Test HeadObject with If-None-Match header (matching ETag)
+
+    Should return NotModified (304) when ETag matches
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('head-if-none-match')
+        s3_client.create_bucket(bucket_name)
+
+        key = 'test-object'
+        data = fixture.generate_random_data(100)
+
+        # Create object
+        put_response = s3_client.put_object(bucket_name, key, data)
+        etag = put_response['ETag']
+
+        # HeadObject with If-None-Match and matching ETag
+        with pytest.raises(ClientError) as exc_info:
+            s3_client.client.head_object(
+                Bucket=bucket_name,
+                Key=key,
+                IfNoneMatch=etag
+            )
+
+        error_code = exc_info.value.response['Error']['Code']
+        assert error_code == 'NotModified' or error_code == '304', \
+            f"Expected NotModified, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_head_object_if_modified_since_not_modified(s3_client, config):
+    """
+    Test HeadObject with If-Modified-Since (object not modified)
+
+    Should return NotModified when object hasn't been modified since timestamp
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('head-if-mod-since')
+        s3_client.create_bucket(bucket_name)
+
+        key = 'test-object'
+        data = fixture.generate_random_data(100)
+
+        # Create object
+        s3_client.put_object(bucket_name, key, data)
+
+        # Wait a moment to ensure timestamp is definitely in the past
+        time.sleep(1)
+
+        # Future timestamp (object is older than this)
+        future_time = datetime.now(timezone.utc) + timedelta(hours=1)
+
+        # HeadObject with future If-Modified-Since
+        with pytest.raises(ClientError) as exc_info:
+            s3_client.client.head_object(
+                Bucket=bucket_name,
+                Key=key,
+                IfModifiedSince=future_time
+            )
+
+        error_code = exc_info.value.response['Error']['Code']
+        assert error_code == 'NotModified' or error_code == '304', \
+            f"Expected NotModified, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_head_object_if_unmodified_since_success(s3_client, config):
+    """
+    Test HeadObject with If-Unmodified-Since (object not modified)
+
+    Should succeed when object hasn't been modified since timestamp
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('head-if-unmod')
+        s3_client.create_bucket(bucket_name)
+
+        key = 'test-object'
+        data = fixture.generate_random_data(100)
+
+        # Create object
+        put_response = s3_client.put_object(bucket_name, key, data)
+
+        # Future timestamp (object is older than this)
+        future_time = datetime.now(timezone.utc) + timedelta(hours=1)
+
+        # HeadObject with future If-Unmodified-Since should succeed
+        head_response = s3_client.client.head_object(
+            Bucket=bucket_name,
+            Key=key,
+            IfUnmodifiedSince=future_time
+        )
+
+        assert head_response['ETag'] == put_response['ETag']
+        assert head_response['ContentLength'] == 100
+
+    finally:
+        fixture.cleanup()
+
+
+def test_get_object_if_match_success(s3_client, config):
+    """
+    Test GetObject with If-Match header (matching ETag)
+
+    Should return object data when ETag matches
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('get-if-match')
+        s3_client.create_bucket(bucket_name)
+
+        key = 'test-object'
+        data = fixture.generate_random_data(256)
+
+        # Create object
+        put_response = s3_client.put_object(bucket_name, key, data)
+        etag = put_response['ETag']
+
+        # GetObject with matching ETag
+        get_response = s3_client.client.get_object(
+            Bucket=bucket_name,
+            Key=key,
+            IfMatch=etag
+        )
+
+        # Should succeed and return data
+        retrieved_data = get_response['Body'].read()
+        assert len(retrieved_data) == 256
+        assert retrieved_data == data
+
+    finally:
+        fixture.cleanup()
+
+
+def test_get_object_if_match_fails(s3_client, config):
+    """
+    Test GetObject with If-Match header (non-matching ETag)
+
+    Should return PreconditionFailed when ETag doesn't match
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('get-if-match-fail')
+        s3_client.create_bucket(bucket_name)
+
+        key = 'test-object'
+        data = fixture.generate_random_data(256)
+
+        # Create object
+        s3_client.put_object(bucket_name, key, data)
+
+        # GetObject with non-matching ETag
+        wrong_etag = '"00000000000000000000000000000000"'
+
+        with pytest.raises(ClientError) as exc_info:
+            s3_client.client.get_object(
+                Bucket=bucket_name,
+                Key=key,
+                IfMatch=wrong_etag
+            )
+
+        error_code = exc_info.value.response['Error']['Code']
+        assert error_code == 'PreconditionFailed' or error_code == '412', \
+            f"Expected PreconditionFailed, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_get_object_if_none_match_returns_not_modified(s3_client, config):
+    """
+    Test GetObject with If-None-Match header (matching ETag)
+
+    Should return NotModified when ETag matches
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('get-if-none-match')
+        s3_client.create_bucket(bucket_name)
+
+        key = 'test-object'
+        data = fixture.generate_random_data(256)
+
+        # Create object
+        put_response = s3_client.put_object(bucket_name, key, data)
+        etag = put_response['ETag']
+
+        # GetObject with If-None-Match and matching ETag
+        with pytest.raises(ClientError) as exc_info:
+            s3_client.client.get_object(
+                Bucket=bucket_name,
+                Key=key,
+                IfNoneMatch=etag
+            )
+
+        error_code = exc_info.value.response['Error']['Code']
+        assert error_code == 'NotModified' or error_code == '304', \
+            f"Expected NotModified, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_get_object_if_modified_since_not_modified(s3_client, config):
+    """
+    Test GetObject with If-Modified-Since (object not modified)
+
+    Should return NotModified when object hasn't been modified since timestamp
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('get-if-mod-since')
+        s3_client.create_bucket(bucket_name)
+
+        key = 'test-object'
+        data = fixture.generate_random_data(256)
+
+        # Create object
+        s3_client.put_object(bucket_name, key, data)
+
+        # Wait a moment
+        time.sleep(1)
+
+        # Future timestamp
+        future_time = datetime.now(timezone.utc) + timedelta(hours=1)
+
+        # GetObject with future If-Modified-Since
+        with pytest.raises(ClientError) as exc_info:
+            s3_client.client.get_object(
+                Bucket=bucket_name,
+                Key=key,
+                IfModifiedSince=future_time
+            )
+
+        error_code = exc_info.value.response['Error']['Code']
+        assert error_code == 'NotModified' or error_code == '304', \
+            f"Expected NotModified, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_copy_object_if_match_success(s3_client, config):
+    """
+    Test CopyObject with CopySourceIfMatch (matching ETag)
+
+    Should copy object when source ETag matches
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('copy-if-match')
+        s3_client.create_bucket(bucket_name)
+
+        source_key = 'source-object'
+        dest_key = 'dest-object'
+        data = fixture.generate_random_data(128)
+
+        # Create source object
+        put_response = s3_client.put_object(bucket_name, source_key, data)
+        etag = put_response['ETag']
+
+        # CopyObject with matching ETag
+        copy_source = {'Bucket': bucket_name, 'Key': source_key}
+        copy_response = s3_client.client.copy_object(
+            CopySource=copy_source,
+            Bucket=bucket_name,
+            Key=dest_key,
+            CopySourceIfMatch=etag
+        )
+
+        # Should succeed
+        assert 'CopyObjectResult' in copy_response or 'ETag' in copy_response
+
+        # Verify destination object exists
+        head_response = s3_client.head_object(bucket_name, dest_key)
+        assert head_response['ContentLength'] == 128
+
+    finally:
+        fixture.cleanup()
+
+
+def test_copy_object_if_match_fails(s3_client, config):
+    """
+    Test CopyObject with CopySourceIfMatch (non-matching ETag)
+
+    Should return PreconditionFailed when source ETag doesn't match
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('copy-if-match-fail')
+        s3_client.create_bucket(bucket_name)
+
+        source_key = 'source-object'
+        dest_key = 'dest-object'
+        data = fixture.generate_random_data(128)
+
+        # Create source object
+        s3_client.put_object(bucket_name, source_key, data)
+
+        # CopyObject with non-matching ETag
+        wrong_etag = '"00000000000000000000000000000000"'
+        copy_source = {'Bucket': bucket_name, 'Key': source_key}
+
+        with pytest.raises(ClientError) as exc_info:
+            s3_client.client.copy_object(
+                CopySource=copy_source,
+                Bucket=bucket_name,
+                Key=dest_key,
+                CopySourceIfMatch=wrong_etag
+            )
+
+        error_code = exc_info.value.response['Error']['Code']
+        assert error_code == 'PreconditionFailed' or error_code == '412', \
+            f"Expected PreconditionFailed, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_copy_object_if_none_match_fails(s3_client, config):
+    """
+    Test CopyObject with CopySourceIfNoneMatch (matching ETag)
+
+    Should return PreconditionFailed when source ETag matches
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('copy-if-none-match')
+        s3_client.create_bucket(bucket_name)
+
+        source_key = 'source-object'
+        dest_key = 'dest-object'
+        data = fixture.generate_random_data(128)
+
+        # Create source object
+        put_response = s3_client.put_object(bucket_name, source_key, data)
+        etag = put_response['ETag']
+
+        # CopyObject with If-None-Match and matching ETag
+        copy_source = {'Bucket': bucket_name, 'Key': source_key}
+
+        with pytest.raises(ClientError) as exc_info:
+            s3_client.client.copy_object(
+                CopySource=copy_source,
+                Bucket=bucket_name,
+                Key=dest_key,
+                CopySourceIfNoneMatch=etag
+            )
+
+        error_code = exc_info.value.response['Error']['Code']
+        assert error_code == 'PreconditionFailed' or error_code == '412', \
+            f"Expected PreconditionFailed, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_copy_object_if_modified_since_success(s3_client, config):
+    """
+    Test CopyObject with CopySourceIfModifiedSince (object modified)
+
+    Should copy object when source has been modified since timestamp
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('copy-if-mod-since')
+        s3_client.create_bucket(bucket_name)
+
+        source_key = 'source-object'
+        dest_key = 'dest-object'
+        data = fixture.generate_random_data(128)
+
+        # Past timestamp (object is newer than this)
+        past_time = datetime.now(timezone.utc) - timedelta(hours=1)
+
+        # Create source object (after past_time)
+        s3_client.put_object(bucket_name, source_key, data)
+
+        # CopyObject with past If-Modified-Since should succeed
+        copy_source = {'Bucket': bucket_name, 'Key': source_key}
+        copy_response = s3_client.client.copy_object(
+            CopySource=copy_source,
+            Bucket=bucket_name,
+            Key=dest_key,
+            CopySourceIfModifiedSince=past_time
+        )
+
+        # Should succeed
+        assert 'CopyObjectResult' in copy_response or 'ETag' in copy_response
+
+    finally:
+        fixture.cleanup()
+
+
+def test_copy_object_if_unmodified_since_fails(s3_client, config):
+    """
+    Test CopyObject with CopySourceIfUnmodifiedSince (object modified)
+
+    Should return PreconditionFailed when source has been modified after timestamp
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name('copy-if-unmod-fail')
+        s3_client.create_bucket(bucket_name)
+
+        source_key = 'source-object'
+        dest_key = 'dest-object'
+        data = fixture.generate_random_data(128)
+
+        # Past timestamp (object will be newer than this)
+        past_time = datetime.now(timezone.utc) - timedelta(hours=1)
+
+        # Create source object (after past_time)
+        s3_client.put_object(bucket_name, source_key, data)
+
+        # CopyObject with past If-Unmodified-Since should fail
+        copy_source = {'Bucket': bucket_name, 'Key': source_key}
+
+        with pytest.raises(ClientError) as exc_info:
+            s3_client.client.copy_object(
+                CopySource=copy_source,
+                Bucket=bucket_name,
+                Key=dest_key,
+                CopySourceIfUnmodifiedSince=past_time
+            )
+
+        error_code = exc_info.value.response['Error']['Code']
+        assert error_code == 'PreconditionFailed' or error_code == '412', \
+            f"Expected PreconditionFailed, got {error_code}"
+
+    finally:
+        fixture.cleanup()
