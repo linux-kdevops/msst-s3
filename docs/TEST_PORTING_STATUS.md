@@ -14,11 +14,21 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 322 | 54.4% |
-| **Remaining** | 270 | 45.6% |
+| **Ported** | 328 | 55.4% |
+| **Remaining** | 264 | 44.6% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (322 tests across 30 files)
+## Ported Tests (328 tests across 31 files)
+
+### ✅ test_versioning_multipart.py (6 tests)
+Tests versioning with multipart upload operations.
+
+- `test_versioning_multipart_upload_success` - CompleteMultipartUpload returns VersionId
+- `test_versioning_multipart_upload_overwrite_an_object` - Multipart creates new version
+- `test_versioning_upload_part_copy_non_existing_version_id` - NoSuchVersion for invalid source version
+- `test_versioning_upload_part_copy_from_an_object_version` - UploadPartCopy from specific version
+- `test_versioning_multipart_upload_with_metadata` - Metadata preserved with multipart version
+- `test_versioning_abort_multipart_upload` - Aborted upload doesn't create version
 
 ### ✅ test_bucket_versioning_config.py (10 tests)
 Tests bucket versioning configuration (PutBucketVersioning and GetBucketVersioning).
@@ -468,7 +478,7 @@ High-value categories to port next (ordered by priority):
 
 | Category | Count | Priority | Notes |
 |----------|-------|----------|-------|
-| **Versioning** | 10 | HIGH | Object versioning (41/51 ported - 80%!) |
+| **Versioning** | 4 | HIGH | Object versioning (47/51 ported - 92%!) |
 | **CopyObject** | 7 | HIGH | Additional copy scenarios (29/26 ported - exceeded!) |
 | **CompleteMultipartUpload** | 24 | HIGH | Multipart completion with checksums |
 | **PutObject** | 2 | HIGH | Additional put scenarios (35/25 ported - exceeded!) |
@@ -553,7 +563,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.4% (317/322 tests)
+- **Current Pass Rate**: 98.5% (323/328 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -595,6 +605,24 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 50% Complete! 🎉**
+
+**Batch 23 (2025-10-10)**: Added 6 tests - **REACHED 55.4%!**
+- **test_versioning_multipart.py**: 6 versioning with multipart upload tests (100% pass rate)
+- CompleteMultipartUpload with versioning:
+  - Returns VersionId in response
+  - Creates new version when overwriting existing object
+  - All versions accessible via ListObjectVersions
+- UploadPartCopy with versioning:
+  - Copy from specific source object version (versionId parameter)
+  - NoSuchVersion error for invalid source version
+  - MinIO may not return CopySourceVersionId in response
+- Multipart upload metadata:
+  - Metadata and ContentType preserved with version
+- AbortMultipartUpload:
+  - Aborted upload doesn't create object version
+  - No versions appear in ListObjectVersions
+- Test coverage: 25MB uploads (5 parts × 5MB each)
+- Note: Versioning tests now at 92% completion! (47/51 ported)
 
 **Batch 22 (2025-10-10)**: Added 10 tests - **REACHED 54.4%!**
 - **test_bucket_versioning_config.py**: 10 bucket versioning configuration tests (100% pass rate)
