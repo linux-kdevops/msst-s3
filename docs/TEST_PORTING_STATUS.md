@@ -14,11 +14,19 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 328 | 55.4% |
-| **Remaining** | 264 | 44.6% |
+| **Ported** | 332 | 56.1% |
+| **Remaining** | 260 | 43.9% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (328 tests across 31 files)
+## Ported Tests (332 tests across 32 files)
+
+### ✅ test_versioning_attributes.py (4 tests)
+Tests GetObjectAttributes with versioning and versioning edge cases.
+
+- `test_versioning_get_object_attributes_object_version` - GetObjectAttributes with VersionId parameter
+- `test_versioning_get_object_attributes_delete_marker` - NoSuchKey for delete marker version
+- `test_versioning_copy_object_special_chars` - CopyObject with special characters and versionId
+- `test_versioning_concurrent_upload_object` - Concurrent uploads create unique versions
 
 ### ✅ test_versioning_multipart.py (6 tests)
 Tests versioning with multipart upload operations.
@@ -478,7 +486,7 @@ High-value categories to port next (ordered by priority):
 
 | Category | Count | Priority | Notes |
 |----------|-------|----------|-------|
-| **Versioning** | 4 | HIGH | Object versioning (47/51 ported - 92%!) |
+| **Versioning** | 0 | HIGH | Object versioning (51/51 ported - ✅ COMPLETE!) |
 | **CopyObject** | 7 | HIGH | Additional copy scenarios (29/26 ported - exceeded!) |
 | **CompleteMultipartUpload** | 24 | HIGH | Multipart completion with checksums |
 | **PutObject** | 2 | HIGH | Additional put scenarios (35/25 ported - exceeded!) |
@@ -563,7 +571,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.5% (323/328 tests)
+- **Current Pass Rate**: 98.5% (327/332 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -605,6 +613,23 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 50% Complete! 🎉**
+
+**Batch 24 (2025-10-10)**: Added 4 tests - **REACHED 56.1%! ✅ VERSIONING COMPLETE!**
+- **test_versioning_attributes.py**: 4 versioning edge case tests (100% pass rate)
+- GetObjectAttributes with versioning:
+  - GetObjectAttributes with VersionId parameter (returns version-specific attributes)
+  - GetObjectAttributes without VersionId (returns latest version)
+  - GetObjectAttributes on delete marker → NoSuchKey or MethodNotAllowed
+  - ObjectSize and ETag attributes for specific versions
+- CopyObject with special characters:
+  - Keys with special characters (?, &) and versionId parameter
+  - boto3 handles URL encoding automatically using dict format
+  - MinIO may not return CopySourceVersionId (implementation-specific)
+- Concurrent uploads:
+  - 5 rapid uploads create 5 unique version IDs
+  - All versions accessible via GetObject with VersionId
+  - ListObjectVersions returns all 5 versions
+- **🎉 VERSIONING CATEGORY COMPLETE: 51/51 tests ported (100%)! 🎉**
 
 **Batch 23 (2025-10-10)**: Added 6 tests - **REACHED 55.4%!**
 - **test_versioning_multipart.py**: 6 versioning with multipart upload tests (100% pass rate)
