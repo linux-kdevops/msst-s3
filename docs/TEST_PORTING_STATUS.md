@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 224 | 37.8% |
-| **Remaining** | 368 | 62.2% |
+| **Ported** | 234 | 39.5% |
+| **Remaining** | 358 | 60.5% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (224 tests across 21 files)
+## Ported Tests (234 tests across 22 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -328,6 +328,20 @@ Tests CompleteMultipartUpload API validations and edge cases.
 - `test_complete_multipart_upload_after_abort` - NoSuchUpload after abort
 - `test_complete_multipart_upload_single_part` - Single part multipart upload
 
+### ✅ test_create_multipart.py (10 tests)
+Tests CreateMultipartUpload API features and edge cases.
+
+- `test_create_multipart_upload_non_existing_bucket` - NoSuchBucket error
+- `test_create_multipart_upload_with_metadata` - Metadata and content headers preservation
+- `test_create_multipart_upload_with_tagging` - Tag application during creation
+- `test_create_multipart_upload_success` - Basic creation with upload ID
+- `test_create_multipart_upload_empty_tagging` - Empty tagging string handling
+- `test_create_multipart_upload_invalid_tagging` - Invalid tag character rejection
+- `test_create_multipart_upload_special_char_tagging` - Special chars in tags (- _ . /)
+- `test_create_multipart_upload_duplicate_tag_keys` - Duplicate key rejection
+- `test_create_multipart_upload_multiple_times_same_key` - Multiple concurrent uploads for same key
+- `test_create_multipart_upload_with_storage_class` - Storage class preservation
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -424,7 +438,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 97.8% (219/224 tests)
+- **Current Pass Rate**: 97.9% (229/234 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -464,6 +478,15 @@ Last Updated: 2025-10-10
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 14 (2025-10-10)**: Added 10 tests
+- **test_create_multipart.py**: 10 CreateMultipartUpload tests (100% pass rate)
+- Metadata and content header preservation
+- Tagging during multipart upload creation
+- Tag validation (invalid characters, duplicates)
+- Special character support in tags (- _ . /)
+- Multiple concurrent uploads for same key
+- Storage class support
 
 **Batch 13 (2025-10-10)**: Added 10 tests
 - **test_complete_multipart.py**: 10 CompleteMultipartUpload tests (100% pass rate)
