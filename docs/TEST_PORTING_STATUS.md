@@ -14,11 +14,26 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 271 | 45.8% |
-| **Remaining** | 321 | 54.2% |
+| **Ported** | 282 | 47.6% |
+| **Remaining** | 310 | 52.4% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (271 tests across 25 files)
+## Ported Tests (282 tests across 26 files)
+
+### ✅ test_versioning_delete_copy.py (11 tests)
+Tests versioning with delete markers, CopyObject, and DeleteObjects.
+
+- `test_versioning_head_object_delete_marker` - HeadObject on delete marker (MethodNotAllowed)
+- `test_versioning_get_object_delete_marker_without_version_id` - GetObject returns NoSuchKey for deleted object
+- `test_versioning_get_object_delete_marker` - GetObject on delete marker version (MethodNotAllowed)
+- `test_versioning_delete_object_delete_a_delete_marker` - Deleting delete marker restores object visibility
+- `test_versioning_delete_null_version_id_object` - Deleting null version permanently
+- `test_versioning_delete_object_suspended` - Delete behavior when versioning suspended
+- `test_versioning_copy_object_success` - CopyObject creates new version in destination
+- `test_versioning_copy_object_non_existing_version_id` - NoSuchKey/NoSuchVersion for invalid source version
+- `test_versioning_copy_object_from_an_object_version` - Copy from specific source version
+- `test_versioning_delete_objects_success` - Batch delete creates delete markers
+- `test_versioning_delete_objects_delete_delete_markers` - Batch delete of versions and delete markers
 
 ### ✅ test_versioning_basic.py (12 tests)
 Tests basic S3 versioning functionality.
@@ -397,7 +412,7 @@ High-value categories to port next (ordered by priority):
 
 | Category | Count | Priority | Notes |
 |----------|-------|----------|-------|
-| **Versioning** | 39 | HIGH | Object versioning (12/51 ported) |
+| **Versioning** | 28 | HIGH | Object versioning (23/51 ported) |
 | **CopyObject** | 18 | HIGH | Additional copy scenarios (already have 8) |
 | **CompleteMultipartUpload** | 24 | HIGH | Multipart completion with checksums |
 | **PutObject** | 13 | HIGH | Additional put scenarios (basic covered) |
@@ -482,7 +497,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.2% (266/271 tests)
+- **Current Pass Rate**: 98.2% (277/282 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -522,6 +537,23 @@ Last Updated: 2025-10-10
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 18 (2025-10-10)**: Added 11 tests
+- **test_versioning_delete_copy.py**: 11 versioning tests for delete markers and copy (100% pass rate)
+- Delete marker behavior:
+  - HeadObject/GetObject on delete markers returns MethodNotAllowed
+  - GetObject without version ID returns NoSuchKey when delete marker exists
+  - Deleting delete marker restores object visibility
+- DeleteObject operations:
+  - Delete null version permanently
+  - Suspended versioning delete behavior
+  - Batch delete (DeleteObjects) creates delete markers
+  - Batch delete specific versions and delete markers
+- CopyObject with versioning:
+  - Creates new version in destination bucket
+  - Copy from specific source version with versionId parameter
+  - Error handling for non-existing version IDs
+- Note: 28 more versioning tests remain (multipart, ListObjectVersions, GetObjectAttributes, etc.)
 
 **Batch 17 (2025-10-10)**: Added 12 tests
 - **test_versioning_basic.py**: 12 basic versioning tests (100% pass rate)
