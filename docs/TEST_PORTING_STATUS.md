@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 132 | 22.3% |
-| **Remaining** | 460 | 77.7% |
+| **Ported** | 142 | 24.0% |
+| **Remaining** | 450 | 76.0% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (132 tests across 13 files)
+## Ported Tests (142 tests across 14 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -204,6 +204,20 @@ Tests GetObject edge cases and response validation.
 - `test_get_object_with_cache_control` - Cache-Control header
 - `test_get_object_response_status` - HTTP 200 status
 
+### ✅ test_copy_object_edge_cases.py (10 tests)
+Tests CopyObject edge cases and error conditions.
+
+- `test_copy_object_success` - Basic copy operation
+- `test_copy_object_non_existing_source` - NoSuchKey error for missing source
+- `test_copy_object_non_existing_dest_bucket` - NoSuchBucket error
+- `test_copy_object_to_itself` - Copy to itself with REPLACE directive
+- `test_copy_object_invalid_copy_source_format` - Invalid CopySource format
+- `test_copy_object_with_tagging_copy` - COPY tagging directive
+- `test_copy_object_with_tagging_replace` - REPLACE tagging directive
+- `test_copy_object_preserves_content_type` - ContentType preservation
+- `test_copy_object_large_object` - Large object (1MB) copy
+- `test_copy_object_returns_etag` - ETag in response
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -300,7 +314,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 96.2% (127/132 tests)
+- **Current Pass Rate**: 96.5% (137/142 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -340,6 +354,9 @@ Last Updated: 2025-10-09
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 6 (2025-10-09)**: Added 10 tests
+- **test_copy_object_edge_cases.py**: 10 CopyObject edge case tests (100% pass rate)
 
 **Batch 5 (2025-10-09)**: Added 25 tests across 2 files
 - **test_bucket_operations.py**: 13 bucket operation tests (100% pass rate)
