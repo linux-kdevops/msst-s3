@@ -14,11 +14,25 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 340 | 57.4% |
-| **Remaining** | 252 | 42.6% |
+| **Ported** | 350 | 59.1% |
+| **Remaining** | 242 | 40.9% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (340 tests across 33 files)
+## Ported Tests (350 tests across 34 files)
+
+### ✅ test_get_object_additional.py (10 tests)
+Tests additional GetObject edge cases and advanced features.
+
+- `test_get_object_with_part_number` - GetObject with PartNumber parameter (retrieve specific part)
+- `test_get_object_if_match_and_if_none_match` - Both conditionals (AWS/MinIO precedence differs)
+- `test_get_object_if_modified_since_future_date` - If-Modified-Since with future date (304 Not Modified)
+- `test_get_object_if_unmodified_since_past_date` - If-Unmodified-Since with past date (PreconditionFailed)
+- `test_get_object_non_existing_key_with_version_id` - Invalid version ID error handling
+- `test_get_object_with_ssec_mismatch` - SSE-C encryption key mismatch error
+- `test_get_object_with_expires_header` - Expires header preservation
+- `test_get_object_deleted_object` - GetObject on deleted object (NoSuchKey)
+- `test_get_object_with_website_redirect_location` - WebsiteRedirectLocation header
+- `test_get_object_response_status_code` - HTTP 200 status validation
 
 ### ✅ test_complete_multipart_checksums.py (8 tests)
 Tests CompleteMultipartUpload with checksums, large objects, and content verification.
@@ -504,7 +518,7 @@ High-value categories to port next (ordered by priority):
 | **PutObject** | 2 | HIGH | Additional put scenarios (35/25 ported - exceeded!) |
 | **PresignedAuth** | 24 | MEDIUM | Presigned URL authentication |
 | **Authentication** | 22 | MEDIUM | Authentication edge cases |
-| **GetObject** | 18 | MEDIUM | Additional get scenarios |
+| **GetObject** | 8 | MEDIUM | Additional get scenarios (36/26 ported - exceeded!) |
 | **PutBucketAcl** | 16 | MEDIUM | Bucket ACL management |
 | **PutBucketPolicy** | 23 | MEDIUM | Bucket policy management |
 | **CreateMultipartUpload** | 15 | MEDIUM | Multipart upload initialization |
@@ -583,7 +597,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.5% (335/340 tests)
+- **Current Pass Rate**: 98.6% (345/350 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -625,6 +639,31 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 50% Complete! 🎉**
+
+**Batch 26 (2025-10-10)**: Added 10 tests - **REACHED 59.1%!**
+- **test_get_object_additional.py**: 10 GetObject additional edge case tests (100% pass rate)
+- GetObject with PartNumber:
+  - Retrieve specific part from multipart upload
+  - PartsCount field in response
+  - Validates multipart object part retrieval
+- Conditional header combinations:
+  - If-Match and If-None-Match together (AWS/MinIO precedence differs)
+  - AWS: If-Match takes precedence (returns 200)
+  - MinIO: If-None-Match takes precedence (returns 304)
+  - If-Modified-Since with future date (returns 304 Not Modified)
+  - If-Unmodified-Since with past date (returns PreconditionFailed)
+- SSE-C encryption:
+  - Server-Side Encryption with Customer-provided key
+  - Key mismatch returns error (BadRequest/InvalidRequest)
+  - MinIO may not support SSE-C (test skipped if NotImplemented)
+- Metadata and headers:
+  - Expires header preservation from PutObject
+  - WebsiteRedirectLocation header (may not be supported)
+- Error scenarios:
+  - GetObject on deleted object (NoSuchKey)
+  - Invalid version ID format (InvalidArgument in MinIO)
+  - HTTP 200 status code validation
+- Note: GetObject tests now exceed estimate! (36 tests ported vs 26 estimated)
 
 **Batch 25 (2025-10-10)**: Added 8 tests - **REACHED 57.4%!**
 - **test_complete_multipart_checksums.py**: 8 CompleteMultipartUpload tests (100% pass rate)
