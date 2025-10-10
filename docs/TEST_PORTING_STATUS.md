@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 152 | 25.7% |
-| **Remaining** | 440 | 74.3% |
+| **Ported** | 164 | 27.7% |
+| **Remaining** | 428 | 72.3% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (152 tests across 15 files)
+## Ported Tests (164 tests across 16 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -232,6 +232,22 @@ Tests DeleteObjects (batch delete) API operations.
 - `test_delete_objects_large_batch` - Large batch (100 objects)
 - `test_delete_objects_response_status` - HTTP 200 status
 
+### ✅ test_list_objects_v1.py (12 tests)
+Tests ListObjects v1 API (older API, still widely used).
+
+- `test_list_objects_non_existing_bucket` - NoSuchBucket error
+- `test_list_objects_with_prefix` - Prefix filtering
+- `test_list_objects_paginated` - Pagination with Marker parameter
+- `test_list_objects_truncated` - IsTruncated flag behavior
+- `test_list_objects_invalid_max_keys` - Invalid MaxKeys validation
+- `test_list_objects_max_keys_zero` - MaxKeys=0 edge case
+- `test_list_objects_delimiter` - Delimiter for directory-like listing
+- `test_list_objects_marker_not_from_obj_list` - Marker doesn't need to exist
+- `test_list_objects_list_all_objs` - List all objects
+- `test_list_objects_nested_dir_file_objs` - Deep directory hierarchies
+- `test_list_objects_empty_bucket` - Empty bucket handling
+- `test_list_objects_prefix_and_delimiter` - Combined prefix + delimiter
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -328,7 +344,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 96.7% (147/152 tests)
+- **Current Pass Rate**: 96.9% (159/164 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -368,6 +384,9 @@ Last Updated: 2025-10-09
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 8 (2025-10-09)**: Added 12 tests
+- **test_list_objects_v1.py**: 12 ListObjects v1 API tests (100% pass rate)
 
 **Batch 7 (2025-10-09)**: Added 10 tests
 - **test_delete_objects.py**: 10 DeleteObjects batch delete tests (100% pass rate)
