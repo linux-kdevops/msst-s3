@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 521 | 88.0% |
-| **Remaining** | 71 | 12.0% |
+| **Ported** | 532 | 89.9% |
+| **Remaining** | 60 | 10.1% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (521 tests across 54 files)
+## Ported Tests (532 tests across 55 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -554,6 +554,21 @@ Tests PutObjectRetention and GetObjectRetention operations.
 - `test_get_object_retention_unset_config` - Get object without retention set
 - `test_get_object_retention_success` - Successful retention retrieval
 
+### ✅ test_object_legal_hold.py (11 tests)
+Tests PutObjectLegalHold and GetObjectLegalHold operations.
+
+- `test_put_object_legal_hold_non_existing_bucket` - NoSuchBucket error
+- `test_put_object_legal_hold_non_existing_object` - NoSuchKey error
+- `test_put_object_legal_hold_invalid_body` - Empty/missing LegalHold body rejected
+- `test_put_object_legal_hold_invalid_status` - Invalid status validation (boto3 client-side)
+- `test_put_object_legal_hold_unset_bucket_object_lock_config` - Bucket without object lock
+- `test_put_object_legal_hold_success` - Successful legal hold ON/OFF
+- `test_get_object_legal_hold_non_existing_bucket` - Get from non-existing bucket
+- `test_get_object_legal_hold_non_existing_object` - Get from non-existing object
+- `test_get_object_legal_hold_disabled_lock` - Get from bucket without object lock
+- `test_get_object_legal_hold_unset_config` - Get object without legal hold set
+- `test_get_object_legal_hold_success` - Successful legal hold retrieval with ON/OFF toggle
+
 ### ✅ test_get_object_edge_cases.py (12 tests)
 Tests GetObject edge cases and response validation.
 
@@ -888,7 +903,30 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
 
-**🎉 MILESTONE: 88% Complete! 🎉**
+**🎉 MILESTONE: 90% Complete! 🎉**
+
+**Batch 48 (2025-10-10)**: Added 11 tests - **REACHED 89.9%! ✅ PutObjectLegalHold COMPLETE!**
+- **test_object_legal_hold.py**: 11 object legal hold tests (100% pass rate)
+- PutObjectLegalHold tests (6 tests):
+  - Non-existing bucket/object errors (NoSuchBucket, NoSuchKey)
+  - Invalid/missing LegalHold body rejected (MalformedXML/InvalidArgument)
+  - Invalid status validation (boto3 client-side ParamValidationError)
+  - Bucket without object lock rejected (InvalidRequest)
+  - Successful legal hold ON setting verified with GetObjectLegalHold
+  - Legal hold removed with Status=OFF for cleanup
+- GetObjectLegalHold tests (5 tests):
+  - Non-existing bucket error (MinIO: InvalidRequest vs AWS: NoSuchBucket)
+  - Non-existing object error (NoSuchKey)
+  - Bucket without object lock error handling
+  - Object without legal hold set returns NoSuchObjectLockConfiguration
+  - Successful retrieval with ON/OFF status toggle test
+- MinIO compatibility:
+  - All 11 tests pass with implementation-aware assertions
+  - InvalidRequest for non-existing bucket on Get operations
+  - Legal hold requires ObjectLockEnabledForBucket=True
+  - Simple ON/OFF status (unlike retention which has dates/modes)
+  - Can be toggled freely unlike COMPLIANCE retention
+  - Proper cleanup by setting Status=OFF before object deletion
 
 **Batch 47 (2025-10-10)**: Added 16 tests - **REACHED 88.0%! ✅ PutObjectRetention COMPLETE!**
 - **test_object_retention.py**: 16 object retention tests (100% pass rate)
