@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 85 | 14.4% |
-| **Remaining** | 507 | 85.6% |
+| **Ported** | 107 | 18.1% |
+| **Remaining** | 485 | 81.9% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (85 tests across 9 files)
+## Ported Tests (107 tests across 11 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -141,6 +141,36 @@ Tests DeleteObject edge cases and idempotency.
 - `test_delete_object_returns_delete_marker` - DeleteMarker field in response
 - `test_delete_object_response_status` - HTTP status code validation
 
+### ✅ test_put_object_edge_cases.py (12 tests)
+Tests PutObject edge cases with headers, metadata, and content validation.
+
+- `test_put_object_non_existing_bucket` - NoSuchBucket error
+- `test_put_object_zero_length` - Empty object creation
+- `test_put_object_with_metadata` - Custom metadata storage
+- `test_put_object_with_content_type` - ContentType preservation
+- `test_put_object_with_cache_control` - Cache-Control header
+- `test_put_object_with_content_encoding` - ContentEncoding header
+- `test_put_object_with_content_disposition` - ContentDisposition header
+- `test_put_object_with_storage_class` - StorageClass setting
+- `test_put_object_overwrite_existing` - Object overwrite behavior
+- `test_put_object_large_metadata` - Large metadata values (1KB)
+- `test_put_object_with_tagging` - Tags during object creation
+- `test_put_object_success_returns_etag` - ETag in response
+
+### ✅ test_object_tagging.py (10 tests)
+Tests object tagging operations (Put/Get/Delete).
+
+- `test_put_object_tagging_success` - Basic tag setting
+- `test_put_object_tagging_non_existing_object` - NoSuchKey error
+- `test_put_object_tagging_replaces_existing` - Tag replacement behavior
+- `test_get_object_tagging_non_existing_object` - NoSuchKey error
+- `test_get_object_tagging_unset_tags` - Empty TagSet handling
+- `test_get_object_tagging_success` - Tag retrieval verification
+- `test_delete_object_tagging_success` - Tag deletion
+- `test_delete_object_tagging_non_existing_object` - NoSuchKey error
+- `test_object_tagging_with_special_characters` - Special chars in tag values
+- `test_object_tagging_multiple_operations` - Multiple tag operations
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -237,7 +267,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 94.1% (80/85 tests)
+- **Current Pass Rate**: 95.3% (102/107 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -277,6 +307,10 @@ Last Updated: 2025-10-09
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 4 (2025-10-09)**: Added 22 tests across 2 files
+- **test_put_object_edge_cases.py**: 12 PutObject edge case tests (100% pass rate)
+- **test_object_tagging.py**: 10 object tagging tests (100% pass rate)
 
 **Batch 3 (2025-10-09)**: Added 28 tests across 3 files
 - **test_head_object_edge_cases.py**: 10 HeadObject edge case tests (100% pass rate)
