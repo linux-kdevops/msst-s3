@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 505 | 85.3% |
-| **Remaining** | 87 | 14.7% |
+| **Ported** | 521 | 88.0% |
+| **Remaining** | 71 | 12.0% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (505 tests across 53 files)
+## Ported Tests (521 tests across 54 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -534,6 +534,26 @@ Tests PutObjectLockConfiguration and GetObjectLockConfiguration operations.
 - `test_get_object_lock_configuration_unset_config` - Configuration not found
 - `test_get_object_lock_configuration_success` - Successful retrieval
 
+### ✅ test_object_retention.py (16 tests)
+Tests PutObjectRetention and GetObjectRetention operations.
+
+- `test_put_object_retention_non_existing_bucket` - NoSuchBucket error
+- `test_put_object_retention_non_existing_object` - NoSuchKey error
+- `test_put_object_retention_unset_bucket_object_lock_config` - Bucket without object lock
+- `test_put_object_retention_expired_retain_until_date` - Past retain-until date rejected
+- `test_put_object_retention_invalid_mode` - Invalid retention mode validation
+- `test_put_object_retention_overwrite_compliance_mode` - COMPLIANCE mode immutability
+- `test_put_object_retention_overwrite_compliance_with_compliance` - Extending COMPLIANCE retention
+- `test_put_object_retention_overwrite_governance_with_governance` - Updating GOVERNANCE retention
+- `test_put_object_retention_overwrite_governance_without_bypass` - GOVERNANCE overwrite requires bypass
+- `test_put_object_retention_overwrite_governance_with_permission` - Bypass governance with permission
+- `test_put_object_retention_success` - Successful retention setting
+- `test_get_object_retention_non_existing_bucket` - Get from non-existing bucket
+- `test_get_object_retention_non_existing_object` - Get from non-existing object
+- `test_get_object_retention_disabled_lock` - Get from bucket without object lock
+- `test_get_object_retention_unset_config` - Get object without retention set
+- `test_get_object_retention_success` - Successful retention retrieval
+
 ### ✅ test_get_object_edge_cases.py (12 tests)
 Tests GetObject edge cases and response validation.
 
@@ -868,7 +888,34 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
 
-**🎉 MILESTONE: 85% Complete! 🎉**
+**🎉 MILESTONE: 88% Complete! 🎉**
+
+**Batch 47 (2025-10-10)**: Added 16 tests - **REACHED 88.0%! ✅ PutObjectRetention COMPLETE!**
+- **test_object_retention.py**: 16 object retention tests (100% pass rate)
+- PutObjectRetention tests (11 tests):
+  - Non-existing bucket/object errors (NoSuchBucket, NoSuchKey)
+  - Bucket without object lock rejected (InvalidRequest/InvalidBucketObjectLockConfiguration)
+  - Expired/past retain-until dates rejected (MinIO: MalformedXML vs AWS: InvalidArgument)
+  - Invalid retention mode validation (boto3 client-side)
+  - COMPLIANCE mode immutability - cannot be overwritten or shortened
+  - COMPLIANCE retention extension - can extend to later date
+  - GOVERNANCE mode updates - can be updated to later date
+  - GOVERNANCE overwrite protection - requires BypassGovernanceRetention
+  - Bypass governance with permission (IAM-dependent)
+  - Successful retention setting verified with GetObjectRetention
+- GetObjectRetention tests (5 tests):
+  - Non-existing bucket error (MinIO: InvalidRequest vs AWS: NoSuchBucket)
+  - Non-existing object error (NoSuchKey)
+  - Bucket without object lock error handling
+  - Object without retention set returns error
+  - Successful retrieval with mode and date validation
+- MinIO compatibility:
+  - All 16 tests pass with implementation-aware assertions
+  - MalformedXML for expired dates instead of InvalidArgument
+  - InvalidRequest for non-existing bucket on Get operations
+  - COMPLIANCE mode properly enforced (cannot be deleted)
+  - GOVERNANCE mode allows updates and bypass
+  - Object lock configuration required for retention operations
 
 **Batch 46 (2025-10-10)**: Added 3 tests - **REACHED 85.3%!**
 - **test_list_buckets_advanced.py**: 3 ListBuckets advanced tests (100% pass rate)
