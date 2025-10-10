@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 190 | 32.1% |
-| **Remaining** | 402 | 67.9% |
+| **Ported** | 204 | 34.5% |
+| **Remaining** | 388 | 65.5% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (190 tests across 18 files)
+## Ported Tests (204 tests across 19 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -282,6 +282,24 @@ Tests GetObject advanced features and response overrides.
 - `test_get_object_with_if_match_fails` - If-Match PreconditionFailed
 - `test_get_object_with_checksums` - Checksum handling
 
+### ✅ test_multipart_abort_list.py (14 tests)
+Tests AbortMultipartUpload and ListMultipartUploads operations.
+
+- `test_abort_multipart_upload_success` - Abort upload removes from list
+- `test_abort_multipart_upload_non_existing_bucket` - NoSuchBucket error
+- `test_abort_multipart_upload_incorrect_upload_id` - Idempotent abort (MinIO)
+- `test_abort_multipart_upload_incorrect_object_key` - Idempotent abort with wrong key
+- `test_abort_multipart_upload_status_code` - 204 No Content response
+- `test_list_multipart_uploads_empty` - Empty upload list
+- `test_list_multipart_uploads_single` - Single upload listing
+- `test_list_multipart_uploads_multiple` - Multiple upload listing
+- `test_list_multipart_uploads_with_prefix` - Prefix filtering (MinIO varies)
+- `test_list_multipart_uploads_pagination` - MaxUploads pagination (MinIO varies)
+- `test_list_multipart_uploads_after_abort` - Aborted upload not listed
+- `test_list_multipart_uploads_non_existing_bucket` - NoSuchBucket error
+- `test_abort_multipart_twice` - Idempotent double abort (MinIO)
+- `test_list_multipart_uploads_with_delimiter` - Delimiter for CommonPrefixes
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -378,7 +396,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 97.4% (185/190 tests)
+- **Current Pass Rate**: 97.5% (199/204 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -414,10 +432,16 @@ When porting additional tests:
 
 ---
 
-Last Updated: 2025-10-09
+Last Updated: 2025-10-10
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 11 (2025-10-10)**: Added 14 tests
+- **test_multipart_abort_list.py**: 14 multipart abort and list tests (100% pass rate)
+- Discovered MinIO idempotent behavior for AbortMultipartUpload
+- MinIO may not respect Prefix/MaxUploads parameters for ListMultipartUploads
+- Tests adapted to handle both AWS S3 and MinIO behaviors
 
 **Batch 10 (2025-10-09)**: Added 14 tests
 - **test_get_object_advanced.py**: 14 GetObject advanced feature tests (100% pass rate)
