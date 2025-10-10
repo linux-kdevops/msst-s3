@@ -14,11 +14,25 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 350 | 59.1% |
-| **Remaining** | 242 | 40.9% |
+| **Ported** | 360 | 60.8% |
+| **Remaining** | 232 | 39.2% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (350 tests across 34 files)
+## Ported Tests (360 tests across 35 files)
+
+### ✅ test_head_object_additional.py (10 tests)
+Tests additional HeadObject scenarios and edge cases.
+
+- `test_head_object_invalid_part_number` - HeadObject with negative PartNumber (BadRequest)
+- `test_head_object_part_number_not_supported` - PartNumber on non-multipart object (416 or error)
+- `test_head_object_non_existing_dir_object` - NotFound for directory when file exists
+- `test_head_object_directory_object_noslash` - NotFound for file when directory exists
+- `test_head_object_not_enabled_checksum_mode` - Checksums without ChecksumMode parameter
+- `test_head_object_checksums` - ChecksumMode=ENABLED returns checksums
+- `test_head_object_invalid_parent_dir` - NotFound for nested object with file parent
+- `test_head_object_zero_len_with_range` - Range on zero-length object
+- `test_head_object_dir_with_range` - Range on directory object (206 Partial Content)
+- `test_head_object_name_too_long` - Keys >1024 bytes rejected
 
 ### ✅ test_get_object_additional.py (10 tests)
 Tests additional GetObject edge cases and advanced features.
@@ -522,7 +536,7 @@ High-value categories to port next (ordered by priority):
 | **PutBucketAcl** | 16 | MEDIUM | Bucket ACL management |
 | **PutBucketPolicy** | 23 | MEDIUM | Bucket policy management |
 | **CreateMultipartUpload** | 15 | MEDIUM | Multipart upload initialization |
-| **HeadObject** | 14 | MEDIUM | Head object edge cases |
+| **HeadObject** | 4 | MEDIUM | Head object edge cases (25/14 ported - exceeded!) |
 | **WORMProtection** | 11 | MEDIUM | Write-Once-Read-Many |
 | **PutObjectRetention** | 11 | MEDIUM | Object retention policies |
 | **AccessControl** | 11 | MEDIUM | Access control integration |
@@ -597,7 +611,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.6% (345/350 tests)
+- **Current Pass Rate**: 98.6% (355/360 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -638,7 +652,28 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
 
-**🎉 MILESTONE: 50% Complete! 🎉**
+**🎉 MILESTONE: 60% Complete! 🎉**
+
+**Batch 27 (2025-10-10)**: Added 10 tests - **REACHED 60.8%!**
+- **test_head_object_additional.py**: 10 HeadObject additional tests (100% pass rate)
+- PartNumber parameter:
+  - HeadObject with negative PartNumber (BadRequest/InvalidArgument)
+  - PartNumber on non-multipart object (MinIO returns 416 Range Not Satisfiable)
+- Directory vs file object distinctions:
+  - NotFound for 'my-obj/' when only 'my-obj' exists
+  - NotFound for 'my-dir' when only 'my-dir/' exists
+  - NotFound for 'not-a-dir/bad-obj' when 'not-a-dir' is a file
+- Checksum handling:
+  - ChecksumMode parameter (ENABLED returns checksums)
+  - Without ChecksumMode, checksums may or may not be returned
+  - Supports CRC32, SHA1, SHA256 algorithms
+  - MinIO may not return all checksum fields
+- Range requests:
+  - Range on zero-length object (may succeed or return InvalidRange)
+  - Range on directory object (206 Partial Content)
+- Key name validation:
+  - Keys >1024 bytes rejected (MinIO returns generic 400)
+- Note: HeadObject tests now exceed estimate! (25 tests ported vs 14 estimated)
 
 **Batch 26 (2025-10-10)**: Added 10 tests - **REACHED 59.1%!**
 - **test_get_object_additional.py**: 10 GetObject additional edge case tests (100% pass rate)
