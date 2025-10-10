@@ -14,11 +14,23 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 332 | 56.1% |
-| **Remaining** | 260 | 43.9% |
+| **Ported** | 340 | 57.4% |
+| **Remaining** | 252 | 42.6% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (332 tests across 32 files)
+## Ported Tests (340 tests across 33 files)
+
+### ✅ test_complete_multipart_checksums.py (8 tests)
+Tests CompleteMultipartUpload with checksums, large objects, and content verification.
+
+- `test_complete_multipart_upload_with_crc32_checksum` - CRC32 checksum validation
+- `test_complete_multipart_upload_with_sha256_checksum` - SHA256 checksum validation
+- `test_complete_multipart_upload_large_object` - Large 50MB upload (10 parts × 5MB)
+- `test_complete_multipart_upload_with_metadata_and_tags` - Metadata and tags preservation
+- `test_complete_multipart_upload_with_storage_class` - StorageClass application
+- `test_complete_multipart_upload_out_of_order_parts` - Parts uploaded out of order
+- `test_complete_multipart_upload_duplicate_upload` - Duplicate complete returns NoSuchUpload
+- `test_complete_multipart_upload_content_verification` - SHA256 content integrity
 
 ### ✅ test_versioning_attributes.py (4 tests)
 Tests GetObjectAttributes with versioning and versioning edge cases.
@@ -488,7 +500,7 @@ High-value categories to port next (ordered by priority):
 |----------|-------|----------|-------|
 | **Versioning** | 0 | HIGH | Object versioning (51/51 ported - ✅ COMPLETE!) |
 | **CopyObject** | 7 | HIGH | Additional copy scenarios (29/26 ported - exceeded!) |
-| **CompleteMultipartUpload** | 24 | HIGH | Multipart completion with checksums |
+| **CompleteMultipartUpload** | 16 | HIGH | Multipart completion (18/34 ported) |
 | **PutObject** | 2 | HIGH | Additional put scenarios (35/25 ported - exceeded!) |
 | **PresignedAuth** | 24 | MEDIUM | Presigned URL authentication |
 | **Authentication** | 22 | MEDIUM | Authentication edge cases |
@@ -571,7 +583,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.5% (327/332 tests)
+- **Current Pass Rate**: 98.5% (335/340 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -613,6 +625,28 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 50% Complete! 🎉**
+
+**Batch 25 (2025-10-10)**: Added 8 tests - **REACHED 57.4%!**
+- **test_complete_multipart_checksums.py**: 8 CompleteMultipartUpload tests (100% pass rate)
+- Checksum validation:
+  - CRC32 checksum algorithm with part-level checksums
+  - SHA256 checksum algorithm with part-level checksums
+  - MinIO may skip some checksum tests if not supported
+- Large object handling:
+  - 50MB upload with 10 parts (5MB each)
+  - Content verification with SHA256 hash
+- Metadata and tag preservation:
+  - Metadata set at CreateMultipartUpload preserved on completed object
+  - Tags applied and retrievable via GetObjectTagging
+  - ContentType and StorageClass application
+- Out-of-order part uploads:
+  - Parts uploaded in reverse order (5, 4, 3, 2, 1)
+  - Completed in correct order (1, 2, 3, 4, 5)
+  - Content assembled correctly
+- Edge cases:
+  - Duplicate complete attempt returns NoSuchUpload
+  - Content verification with unique data per part
+- Note: CompleteMultipartUpload 18/34 ported (53%)
 
 **Batch 24 (2025-10-10)**: Added 4 tests - **REACHED 56.1%! ✅ VERSIONING COMPLETE!**
 - **test_versioning_attributes.py**: 4 versioning edge case tests (100% pass rate)
