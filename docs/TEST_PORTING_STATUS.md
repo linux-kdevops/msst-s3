@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 470 | 79.4% |
-| **Remaining** | 122 | 20.6% |
+| **Ported** | 471 | 79.6% |
+| **Remaining** | 121 | 20.4% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (470 tests across 47 files)
+## Ported Tests (471 tests across 48 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -210,6 +210,11 @@ Tests ListObjectVersions API for retrieving object version history.
 - `test_list_object_versions_containing_null_version_id_obj` - Complex null version scenario (suspended/re-enabled)
 - `test_list_object_versions_single_null_version_id_object` - Null version created before versioning enabled
 - `test_list_object_versions_checksum` - ListObjectVersions with checksum-enabled objects
+
+### ✅ test_list_object_versions_additional.py (1 test)
+Tests ListObjectVersions with versioning disabled.
+
+- `test_list_object_versions_versioning_disabled` - Null version IDs when versioning not enabled
 
 ### ✅ test_put_object_conditionals.py (11 tests)
 Tests PutObject with conditional writes and invalid object names.
@@ -699,7 +704,7 @@ High-value categories to port next (ordered by priority):
 | **PutObjectRetention** | 11 | MEDIUM | Object retention policies |
 | **AccessControl** | 11 | MEDIUM | Access control integration |
 | **DeleteObject** | 10 | LOW | Deletion edge cases |
-| **ListObjectVersions** | 1 | LOW | Version listing (8/9 ported) |
+| **ListObjectVersions** | 0 | LOW | Version listing (9/9 ported - ✅ COMPLETE!) |
 | **ListMultipartUploads** | 9 | LOW | List in-progress uploads |
 | **CreateBucket** | 9 | LOW | Bucket creation (basics covered) |
 | **PutObjectLockConfiguration** | 8 | LOW | Object lock config |
@@ -769,7 +774,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 97.9% (460/470 tests)
+- **Current Pass Rate**: 97.9% (461/471 tests)
 - **Known Failures**: 10 tests (3 CRC32C dependency, 2 path validation, 5 MinIO owner ID limitation, 3 SSE-S3 limitations, 3 object lock limitations, 2 policy condition limitations)
 
 ## Quality Standards
@@ -811,6 +816,29 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 79% Complete! 🎉**
+
+**Batch 41 (2025-10-10)**: Added 1 test - **REACHED 79.6%! ✅ ListObjectVersions COMPLETE!**
+- **test_list_object_versions_additional.py**: 1 ListObjectVersions test (100% pass rate)
+- Versioning disabled behavior:
+  - ListObjectVersions when versioning not enabled
+  - Objects have null version IDs
+  - All objects marked as IsLatest=true
+  - Version listing works without versioning enabled
+- Null version handling:
+  - Objects created before versioning has null versions
+  - VersionId field contains "null" or None
+  - Multiple objects with null versions listed correctly
+- Response validation:
+  - Versions array contains all objects
+  - Each version has Key, Size, ETag, StorageClass
+  - IsLatest flag set correctly
+  - Size matches object data length
+- MinIO compatibility:
+  - Null version IDs handled correctly
+  - All response fields present and valid
+  - Version listing functional without versioning
+- **🎉 LISTOBJECTVERSIONS CATEGORY COMPLETE: 9/9 tests ported (100%)! 🎉**
+- Eight categories now 100% complete: Versioning, PutBucketAcl, PutBucketPolicy, CompleteMultipartUpload, CreateMultipartUpload, PutObject, CopyObject, ListObjectVersions!
 
 **Batch 40 (2025-10-10)**: Added 10 tests - **REACHED 79.4%! ✅ CopyObject COMPLETE!**
 - **test_copy_object_checksums.py**: 10 CopyObject checksum tests (100% pass rate)
