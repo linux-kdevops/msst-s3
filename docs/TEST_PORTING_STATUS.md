@@ -14,11 +14,25 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 390 | 65.9% |
-| **Remaining** | 202 | 34.1% |
+| **Ported** | 400 | 67.6% |
+| **Remaining** | 192 | 32.4% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (390 tests across 38 files)
+## Ported Tests (400 tests across 39 files)
+
+### ✅ test_put_bucket_policy.py (10 tests)
+Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
+
+- `test_put_bucket_policy_non_existing_bucket` - NoSuchBucket for non-existing bucket
+- `test_put_bucket_policy_invalid_json` - MalformedPolicy/InvalidArgument for invalid JSON
+- `test_put_bucket_policy_missing_version` - Policy documents should include Version field
+- `test_put_bucket_policy_empty_statement` - Empty Statement array handling
+- `test_put_bucket_policy_missing_effect` - Statements must have Effect (Allow/Deny)
+- `test_put_bucket_policy_success_allow_public_read` - Public read policy with GetBucketPolicy verification
+- `test_put_bucket_policy_success_deny_statement` - Deny effect policy
+- `test_get_bucket_policy_non_existing_bucket` - NoSuchBucket or NoSuchBucketPolicy for non-existing bucket
+- `test_get_bucket_policy_no_policy` - NoSuchBucketPolicy for bucket with no policy
+- `test_delete_bucket_policy_success` - Remove policy from bucket
 
 ### ✅ test_put_bucket_tagging.py (10 tests)
 Tests PutBucketTagging, GetBucketTagging, and DeleteBucketTagging API operations.
@@ -576,7 +590,7 @@ High-value categories to port next (ordered by priority):
 | **Authentication** | 22 | MEDIUM | Authentication edge cases |
 | **GetObject** | 8 | MEDIUM | Additional get scenarios (36/26 ported - exceeded!) |
 | **PutBucketAcl** | 6 | MEDIUM | Bucket ACL management (10/16 ported) |
-| **PutBucketPolicy** | 23 | MEDIUM | Bucket policy management |
+| **PutBucketPolicy** | 13 | MEDIUM | Bucket policy management (10/23 ported) |
 | **CreateMultipartUpload** | 15 | MEDIUM | Multipart upload initialization |
 | **HeadObject** | 4 | MEDIUM | Head object edge cases (25/14 ported - exceeded!) |
 | **WORMProtection** | 11 | MEDIUM | Write-Once-Read-Many |
@@ -653,7 +667,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.7% (385/390 tests)
+- **Current Pass Rate**: 98.8% (395/400 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -694,7 +708,31 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
 
-**🎉 MILESTONE: 65% Complete! 🎉**
+**🎉 MILESTONE: 67% Complete! 🎉**
+
+**Batch 31 (2025-10-10)**: Added 10 tests - **REACHED 67.6%!**
+- **test_put_bucket_policy.py**: 10 PutBucketPolicy tests (100% pass rate)
+- PutBucketPolicy operations:
+  - PutBucketPolicy on non-existing bucket (NoSuchBucket)
+  - Policy validation (invalid JSON, missing Version, empty Statement, missing Effect)
+  - Policy document structure requirements (Version field, Statement array, Effect field)
+  - Successful policy creation with Allow and Deny effects
+  - Public read access policy configuration
+  - Policy JSON parsing and validation
+- GetBucketPolicy operations:
+  - GetBucketPolicy on non-existing bucket (NoSuchBucket/NoSuchBucketPolicy)
+  - GetBucketPolicy on bucket with no policy (NoSuchBucketPolicy)
+  - Policy retrieval and JSON parsing
+  - Policy structure verification
+- DeleteBucketPolicy:
+  - Remove policy from bucket
+  - Verify policy deletion with GetBucketPolicy
+- MinIO compatibility notes:
+  - PutBucketPolicy and GetBucketPolicy fully functional in MinIO
+  - Some implementations may accept missing Version or empty Statement
+  - Policy validation may vary across implementations
+  - DeleteBucketPolicy works correctly
+- Note: PutBucketPolicy tests at 10/23 (43% complete)
 
 **Batch 30 (2025-10-10)**: Added 10 tests - **REACHED 65.9%!**
 - **test_put_bucket_tagging.py**: 10 PutBucketTagging tests (100% pass rate)
