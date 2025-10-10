@@ -19,7 +19,7 @@ import sys
 import os
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from tests.common.fixtures import TestFixture
 from botocore.exceptions import ClientError
@@ -34,38 +34,33 @@ def test_put_object_tagging_success(s3_client, config):
     fixture = TestFixture(s3_client, config)
 
     try:
-        bucket_name = fixture.generate_bucket_name('tag-put-success')
+        bucket_name = fixture.generate_bucket_name("tag-put-success")
         s3_client.create_bucket(bucket_name)
 
-        key = 'tagged-object'
+        key = "tagged-object"
         data = fixture.generate_random_data(100)
         s3_client.put_object(bucket_name, key, data)
 
         # Put tags
         tagging = {
-            'TagSet': [
-                {'Key': 'key1', 'Value': 'value1'},
-                {'Key': 'key2', 'Value': 'value2'},
+            "TagSet": [
+                {"Key": "key1", "Value": "value1"},
+                {"Key": "key2", "Value": "value2"},
             ]
         }
 
         s3_client.client.put_object_tagging(
-            Bucket=bucket_name,
-            Key=key,
-            Tagging=tagging
+            Bucket=bucket_name, Key=key, Tagging=tagging
         )
 
         # Verify tags were set
-        tag_response = s3_client.client.get_object_tagging(
-            Bucket=bucket_name,
-            Key=key
-        )
+        tag_response = s3_client.client.get_object_tagging(Bucket=bucket_name, Key=key)
 
-        tags = {tag['Key']: tag['Value'] for tag in tag_response['TagSet']}
-        assert 'key1' in tags
-        assert tags['key1'] == 'value1'
-        assert 'key2' in tags
-        assert tags['key2'] == 'value2'
+        tags = {tag["Key"]: tag["Value"] for tag in tag_response["TagSet"]}
+        assert "key1" in tags
+        assert tags["key1"] == "value1"
+        assert "key2" in tags
+        assert tags["key2"] == "value2"
 
     finally:
         fixture.cleanup()
@@ -80,25 +75,22 @@ def test_put_object_tagging_non_existing_object(s3_client, config):
     fixture = TestFixture(s3_client, config)
 
     try:
-        bucket_name = fixture.generate_bucket_name('tag-put-noobj')
+        bucket_name = fixture.generate_bucket_name("tag-put-noobj")
         s3_client.create_bucket(bucket_name)
 
         tagging = {
-            'TagSet': [
-                {'Key': 'key1', 'Value': 'value1'},
+            "TagSet": [
+                {"Key": "key1", "Value": "value1"},
             ]
         }
 
         with pytest.raises(ClientError) as exc_info:
             s3_client.client.put_object_tagging(
-                Bucket=bucket_name,
-                Key='non-existing-object',
-                Tagging=tagging
+                Bucket=bucket_name, Key="non-existing-object", Tagging=tagging
             )
 
-        error_code = exc_info.value.response['Error']['Code']
-        assert error_code == 'NoSuchKey', \
-            f"Expected NoSuchKey, got {error_code}"
+        error_code = exc_info.value.response["Error"]["Code"]
+        assert error_code == "NoSuchKey", f"Expected NoSuchKey, got {error_code}"
 
     finally:
         fixture.cleanup()
@@ -113,49 +105,42 @@ def test_put_object_tagging_replaces_existing(s3_client, config):
     fixture = TestFixture(s3_client, config)
 
     try:
-        bucket_name = fixture.generate_bucket_name('tag-replace')
+        bucket_name = fixture.generate_bucket_name("tag-replace")
         s3_client.create_bucket(bucket_name)
 
-        key = 'tagged-object'
+        key = "tagged-object"
         data = fixture.generate_random_data(100)
         s3_client.put_object(bucket_name, key, data)
 
         # Set initial tags
         tagging1 = {
-            'TagSet': [
-                {'Key': 'old-key', 'Value': 'old-value'},
+            "TagSet": [
+                {"Key": "old-key", "Value": "old-value"},
             ]
         }
 
         s3_client.client.put_object_tagging(
-            Bucket=bucket_name,
-            Key=key,
-            Tagging=tagging1
+            Bucket=bucket_name, Key=key, Tagging=tagging1
         )
 
         # Replace with new tags
         tagging2 = {
-            'TagSet': [
-                {'Key': 'new-key', 'Value': 'new-value'},
+            "TagSet": [
+                {"Key": "new-key", "Value": "new-value"},
             ]
         }
 
         s3_client.client.put_object_tagging(
-            Bucket=bucket_name,
-            Key=key,
-            Tagging=tagging2
+            Bucket=bucket_name, Key=key, Tagging=tagging2
         )
 
         # Verify old tags are gone
-        tag_response = s3_client.client.get_object_tagging(
-            Bucket=bucket_name,
-            Key=key
-        )
+        tag_response = s3_client.client.get_object_tagging(Bucket=bucket_name, Key=key)
 
-        tags = {tag['Key']: tag['Value'] for tag in tag_response['TagSet']}
-        assert 'old-key' not in tags
-        assert 'new-key' in tags
-        assert tags['new-key'] == 'new-value'
+        tags = {tag["Key"]: tag["Value"] for tag in tag_response["TagSet"]}
+        assert "old-key" not in tags
+        assert "new-key" in tags
+        assert tags["new-key"] == "new-value"
 
     finally:
         fixture.cleanup()
@@ -170,18 +155,16 @@ def test_get_object_tagging_non_existing_object(s3_client, config):
     fixture = TestFixture(s3_client, config)
 
     try:
-        bucket_name = fixture.generate_bucket_name('tag-get-noobj')
+        bucket_name = fixture.generate_bucket_name("tag-get-noobj")
         s3_client.create_bucket(bucket_name)
 
         with pytest.raises(ClientError) as exc_info:
             s3_client.client.get_object_tagging(
-                Bucket=bucket_name,
-                Key='non-existing-object'
+                Bucket=bucket_name, Key="non-existing-object"
             )
 
-        error_code = exc_info.value.response['Error']['Code']
-        assert error_code == 'NoSuchKey', \
-            f"Expected NoSuchKey, got {error_code}"
+        error_code = exc_info.value.response["Error"]["Code"]
+        assert error_code == "NoSuchKey", f"Expected NoSuchKey, got {error_code}"
 
     finally:
         fixture.cleanup()
@@ -196,29 +179,30 @@ def test_get_object_tagging_unset_tags(s3_client, config):
     fixture = TestFixture(s3_client, config)
 
     try:
-        bucket_name = fixture.generate_bucket_name('tag-get-unset')
+        bucket_name = fixture.generate_bucket_name("tag-get-unset")
         s3_client.create_bucket(bucket_name)
 
-        key = 'untagged-object'
+        key = "untagged-object"
         data = fixture.generate_random_data(100)
         s3_client.put_object(bucket_name, key, data)
 
         # Get tags on object without tags
         try:
             tag_response = s3_client.client.get_object_tagging(
-                Bucket=bucket_name,
-                Key=key
+                Bucket=bucket_name, Key=key
             )
 
             # Should return empty TagSet
-            assert 'TagSet' in tag_response
-            assert len(tag_response['TagSet']) == 0
+            assert "TagSet" in tag_response
+            assert len(tag_response["TagSet"]) == 0
 
         except ClientError as e:
             # Some implementations may return error for unset tags
-            error_code = e.response['Error']['Code']
-            assert error_code in ['NoSuchTagSet', 'NoSuchTagSetError'], \
-                f"Expected NoSuchTagSet, got {error_code}"
+            error_code = e.response["Error"]["Code"]
+            assert error_code in [
+                "NoSuchTagSet",
+                "NoSuchTagSetError",
+            ], f"Expected NoSuchTagSet, got {error_code}"
 
     finally:
         fixture.cleanup()
@@ -233,39 +217,30 @@ def test_get_object_tagging_success(s3_client, config):
     fixture = TestFixture(s3_client, config)
 
     try:
-        bucket_name = fixture.generate_bucket_name('tag-get-success')
+        bucket_name = fixture.generate_bucket_name("tag-get-success")
         s3_client.create_bucket(bucket_name)
 
-        key = 'tagged-object'
+        key = "tagged-object"
         data = fixture.generate_random_data(100)
         s3_client.put_object(bucket_name, key, data)
 
         # Set tags
         expected_tags = {
-            'environment': 'testing',
-            'application': 's3-tests',
-            'version': '1.0',
+            "environment": "testing",
+            "application": "s3-tests",
+            "version": "1.0",
         }
 
-        tagging = {
-            'TagSet': [
-                {'Key': k, 'Value': v} for k, v in expected_tags.items()
-            ]
-        }
+        tagging = {"TagSet": [{"Key": k, "Value": v} for k, v in expected_tags.items()]}
 
         s3_client.client.put_object_tagging(
-            Bucket=bucket_name,
-            Key=key,
-            Tagging=tagging
+            Bucket=bucket_name, Key=key, Tagging=tagging
         )
 
         # Get and verify tags
-        tag_response = s3_client.client.get_object_tagging(
-            Bucket=bucket_name,
-            Key=key
-        )
+        tag_response = s3_client.client.get_object_tagging(Bucket=bucket_name, Key=key)
 
-        retrieved_tags = {tag['Key']: tag['Value'] for tag in tag_response['TagSet']}
+        retrieved_tags = {tag["Key"]: tag["Value"] for tag in tag_response["TagSet"]}
         assert retrieved_tags == expected_tags
 
     finally:
@@ -281,47 +256,41 @@ def test_delete_object_tagging_success(s3_client, config):
     fixture = TestFixture(s3_client, config)
 
     try:
-        bucket_name = fixture.generate_bucket_name('tag-delete')
+        bucket_name = fixture.generate_bucket_name("tag-delete")
         s3_client.create_bucket(bucket_name)
 
-        key = 'tagged-object'
+        key = "tagged-object"
         data = fixture.generate_random_data(100)
         s3_client.put_object(bucket_name, key, data)
 
         # Set tags
         tagging = {
-            'TagSet': [
-                {'Key': 'key1', 'Value': 'value1'},
-                {'Key': 'key2', 'Value': 'value2'},
+            "TagSet": [
+                {"Key": "key1", "Value": "value1"},
+                {"Key": "key2", "Value": "value2"},
             ]
         }
 
         s3_client.client.put_object_tagging(
-            Bucket=bucket_name,
-            Key=key,
-            Tagging=tagging
+            Bucket=bucket_name, Key=key, Tagging=tagging
         )
 
         # Delete tags
-        s3_client.client.delete_object_tagging(
-            Bucket=bucket_name,
-            Key=key
-        )
+        s3_client.client.delete_object_tagging(Bucket=bucket_name, Key=key)
 
         # Verify tags are gone
         try:
             tag_response = s3_client.client.get_object_tagging(
-                Bucket=bucket_name,
-                Key=key
+                Bucket=bucket_name, Key=key
             )
 
             # Should return empty TagSet
-            assert len(tag_response.get('TagSet', [])) == 0
+            assert len(tag_response.get("TagSet", [])) == 0
 
         except ClientError as e:
             # Some implementations may return error for deleted tags
-            error_code = e.response['Error']['Code']
-            assert error_code in ['NoSuchTagSet', 'NoSuchTagSetError']
+            error_code = e.response["Error"]["Code"]
+            assert error_code in ["NoSuchTagSet", "NoSuchTagSetError"]
 
     finally:
         fixture.cleanup()
@@ -336,18 +305,16 @@ def test_delete_object_tagging_non_existing_object(s3_client, config):
     fixture = TestFixture(s3_client, config)
 
     try:
-        bucket_name = fixture.generate_bucket_name('tag-delete-noobj')
+        bucket_name = fixture.generate_bucket_name("tag-delete-noobj")
         s3_client.create_bucket(bucket_name)
 
         with pytest.raises(ClientError) as exc_info:
             s3_client.client.delete_object_tagging(
-                Bucket=bucket_name,
-                Key='non-existing-object'
+                Bucket=bucket_name, Key="non-existing-object"
             )
 
-        error_code = exc_info.value.response['Error']['Code']
-        assert error_code == 'NoSuchKey', \
-            f"Expected NoSuchKey, got {error_code}"
+        error_code = exc_info.value.response["Error"]["Code"]
+        assert error_code == "NoSuchKey", f"Expected NoSuchKey, got {error_code}"
 
     finally:
         fixture.cleanup()
@@ -362,38 +329,33 @@ def test_object_tagging_with_special_characters(s3_client, config):
     fixture = TestFixture(s3_client, config)
 
     try:
-        bucket_name = fixture.generate_bucket_name('tag-special')
+        bucket_name = fixture.generate_bucket_name("tag-special")
         s3_client.create_bucket(bucket_name)
 
-        key = 'tagged-object'
+        key = "tagged-object"
         data = fixture.generate_random_data(100)
         s3_client.put_object(bucket_name, key, data)
 
         # Tags with special characters (S3 restricts certain chars)
         tagging = {
-            'TagSet': [
-                {'Key': 'path', 'Value': '/usr/local/bin'},
-                {'Key': 'email', 'Value': 'test@example.com'},
-                {'Key': 'description', 'Value': 'Test object with spaces and symbols'},
+            "TagSet": [
+                {"Key": "path", "Value": "/usr/local/bin"},
+                {"Key": "email", "Value": "test@example.com"},
+                {"Key": "description", "Value": "Test object with spaces and symbols"},
             ]
         }
 
         s3_client.client.put_object_tagging(
-            Bucket=bucket_name,
-            Key=key,
-            Tagging=tagging
+            Bucket=bucket_name, Key=key, Tagging=tagging
         )
 
         # Verify tags
-        tag_response = s3_client.client.get_object_tagging(
-            Bucket=bucket_name,
-            Key=key
-        )
+        tag_response = s3_client.client.get_object_tagging(Bucket=bucket_name, Key=key)
 
-        tags = {tag['Key']: tag['Value'] for tag in tag_response['TagSet']}
-        assert tags['path'] == '/usr/local/bin'
-        assert tags['email'] == 'test@example.com'
-        assert tags['description'] == 'Test object with spaces and symbols'
+        tags = {tag["Key"]: tag["Value"] for tag in tag_response["TagSet"]}
+        assert tags["path"] == "/usr/local/bin"
+        assert tags["email"] == "test@example.com"
+        assert tags["description"] == "Test object with spaces and symbols"
 
     finally:
         fixture.cleanup()
@@ -408,63 +370,251 @@ def test_object_tagging_multiple_operations(s3_client, config):
     fixture = TestFixture(s3_client, config)
 
     try:
-        bucket_name = fixture.generate_bucket_name('tag-multiple')
+        bucket_name = fixture.generate_bucket_name("tag-multiple")
         s3_client.create_bucket(bucket_name)
 
-        key = 'tagged-object'
+        key = "tagged-object"
         data = fixture.generate_random_data(100)
         s3_client.put_object(bucket_name, key, data)
 
         # Operation 1: Set initial tags
         tagging1 = {
-            'TagSet': [
-                {'Key': 'stage', 'Value': 'dev'},
+            "TagSet": [
+                {"Key": "stage", "Value": "dev"},
             ]
         }
         s3_client.client.put_object_tagging(
-            Bucket=bucket_name,
-            Key=key,
-            Tagging=tagging1
+            Bucket=bucket_name, Key=key, Tagging=tagging1
         )
 
         # Operation 2: Update tags
         tagging2 = {
-            'TagSet': [
-                {'Key': 'stage', 'Value': 'prod'},
-                {'Key': 'region', 'Value': 'us-east-1'},
+            "TagSet": [
+                {"Key": "stage", "Value": "prod"},
+                {"Key": "region", "Value": "us-east-1"},
             ]
         }
         s3_client.client.put_object_tagging(
-            Bucket=bucket_name,
-            Key=key,
-            Tagging=tagging2
+            Bucket=bucket_name, Key=key, Tagging=tagging2
         )
 
         # Verify current state
-        tag_response = s3_client.client.get_object_tagging(
-            Bucket=bucket_name,
-            Key=key
-        )
+        tag_response = s3_client.client.get_object_tagging(Bucket=bucket_name, Key=key)
 
-        tags = {tag['Key']: tag['Value'] for tag in tag_response['TagSet']}
-        assert tags['stage'] == 'prod'
-        assert tags['region'] == 'us-east-1'
+        tags = {tag["Key"]: tag["Value"] for tag in tag_response["TagSet"]}
+        assert tags["stage"] == "prod"
+        assert tags["region"] == "us-east-1"
 
         # Operation 3: Delete all tags
-        s3_client.client.delete_object_tagging(
-            Bucket=bucket_name,
-            Key=key
-        )
+        s3_client.client.delete_object_tagging(Bucket=bucket_name, Key=key)
 
         # Verify tags are gone
         try:
             tag_response = s3_client.client.get_object_tagging(
-                Bucket=bucket_name,
-                Key=key
+                Bucket=bucket_name, Key=key
             )
-            assert len(tag_response.get('TagSet', [])) == 0
+            assert len(tag_response.get("TagSet", [])) == 0
         except ClientError as e:
-            assert e.response['Error']['Code'] in ['NoSuchTagSet', 'NoSuchTagSetError']
+            assert e.response["Error"]["Code"] in ["NoSuchTagSet", "NoSuchTagSetError"]
+
+    finally:
+        fixture.cleanup()
+
+
+def test_put_object_tagging_long_tags(s3_client, config):
+    """
+    Test PutObjectTagging with oversized tag keys and values
+
+    Tag keys max 128 chars, values max 256 chars - should be rejected
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("tag-long")
+        s3_client.create_bucket(bucket_name)
+
+        key = "test-object"
+        s3_client.put_object(bucket_name, key, b"data")
+
+        # Test tag key too long (129 chars)
+        with pytest.raises(ClientError) as exc_info:
+            tagging = {
+                "TagSet": [
+                    {"Key": "a" * 129, "Value": "value"},
+                ]
+            }
+            s3_client.client.put_object_tagging(
+                Bucket=bucket_name, Key=key, Tagging=tagging
+            )
+
+        error_code = exc_info.value.response["Error"]["Code"]
+        assert error_code in [
+            "InvalidTagKey",
+            "InvalidTag",
+            "InvalidArgument",
+        ], f"Expected InvalidTagKey for long key, got {error_code}"
+
+        # Test tag value too long (257 chars)
+        with pytest.raises(ClientError) as exc_info:
+            tagging = {
+                "TagSet": [
+                    {"Key": "key", "Value": "v" * 257},
+                ]
+            }
+            s3_client.client.put_object_tagging(
+                Bucket=bucket_name, Key=key, Tagging=tagging
+            )
+
+        error_code = exc_info.value.response["Error"]["Code"]
+        assert error_code in [
+            "InvalidTagValue",
+            "InvalidTag",
+            "InvalidArgument",
+        ], f"Expected InvalidTagValue for long value, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_put_object_tagging_duplicate_keys(s3_client, config):
+    """
+    Test PutObjectTagging with duplicate tag keys
+
+    Duplicate keys should be rejected
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("tag-duplicate")
+        s3_client.create_bucket(bucket_name)
+
+        key = "test-object"
+        s3_client.put_object(bucket_name, key, b"data")
+
+        # Try to set tags with duplicate keys
+        with pytest.raises(ClientError) as exc_info:
+            tagging = {
+                "TagSet": [
+                    {"Key": "key-1", "Value": "value-1"},
+                    {"Key": "key-2", "Value": "value-2"},
+                    {"Key": "same-key", "Value": "value-3"},
+                    {"Key": "same-key", "Value": "value-4"},  # Duplicate
+                ]
+            }
+            s3_client.client.put_object_tagging(
+                Bucket=bucket_name, Key=key, Tagging=tagging
+            )
+
+        error_code = exc_info.value.response["Error"]["Code"]
+        assert error_code in [
+            "InvalidTag",
+            "DuplicateTagKeys",
+            "InvalidArgument",
+        ], f"Expected InvalidTag for duplicate keys, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_put_object_tagging_tag_count_limit(s3_client, config):
+    """
+    Test PutObjectTagging with too many tags
+
+    S3 limits objects to 10 tags - 11 should be rejected
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("tag-count-limit")
+        s3_client.create_bucket(bucket_name)
+
+        key = "test-object"
+        s3_client.put_object(bucket_name, key, b"data")
+
+        # Try to set 11 tags (exceeds limit of 10)
+        with pytest.raises(ClientError) as exc_info:
+            tag_set = [{"Key": f"key-{i}", "Value": f"value-{i}"} for i in range(11)]
+            tagging = {"TagSet": tag_set}
+
+            s3_client.client.put_object_tagging(
+                Bucket=bucket_name, Key=key, Tagging=tagging
+            )
+
+        error_code = exc_info.value.response["Error"]["Code"]
+        assert error_code in [
+            "BadRequest",
+            "InvalidTag",
+            "InvalidArgument",
+        ], f"Expected BadRequest for too many tags, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_get_object_tagging_invalid_parent(s3_client, config):
+    """
+    Test GetObjectTagging with invalid parent path
+
+    Trying to get tags for object under a file (not directory) should fail
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("tag-invalid-parent")
+        s3_client.create_bucket(bucket_name)
+
+        # Create a file object
+        s3_client.put_object(bucket_name, "not-a-dir", b"data")
+
+        # Try to get tags for object that would be under the file
+        with pytest.raises(ClientError) as exc_info:
+            s3_client.client.get_object_tagging(
+                Bucket=bucket_name, Key="not-a-dir/bad-obj"
+            )
+
+        error_code = exc_info.value.response["Error"]["Code"]
+        assert (
+            error_code == "NoSuchKey"
+        ), f"Expected NoSuchKey for invalid parent, got {error_code}"
+
+    finally:
+        fixture.cleanup()
+
+
+def test_delete_object_tagging_success_status(s3_client, config):
+    """
+    Test DeleteObjectTagging returns correct HTTP status
+
+    Should return HTTP 204 No Content on success
+    """
+    fixture = TestFixture(s3_client, config)
+
+    try:
+        bucket_name = fixture.generate_bucket_name("tag-delete-status")
+        s3_client.create_bucket(bucket_name)
+
+        key = "tagged-object"
+        s3_client.put_object(bucket_name, key, b"data")
+
+        # Set tags
+        tagging = {
+            "TagSet": [
+                {"Key": "Hello", "Value": "World"},
+            ]
+        }
+        s3_client.client.put_object_tagging(
+            Bucket=bucket_name, Key=key, Tagging=tagging
+        )
+
+        # Delete tags and check status
+        delete_response = s3_client.client.delete_object_tagging(
+            Bucket=bucket_name, Key=key
+        )
+
+        # Verify HTTP status code
+        assert "ResponseMetadata" in delete_response
+        http_status = delete_response["ResponseMetadata"]["HTTPStatusCode"]
+        assert http_status in [200, 204], f"Expected HTTP 200/204, got {http_status}"
 
     finally:
         fixture.cleanup()

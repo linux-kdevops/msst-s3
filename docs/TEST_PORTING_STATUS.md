@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 532 | 89.9% |
-| **Remaining** | 60 | 10.1% |
+| **Ported** | 537 | 90.7% |
+| **Remaining** | 55 | 9.3% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (532 tests across 55 files)
+## Ported Tests (537 tests across 55 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -469,17 +469,22 @@ Tests PutObject additional features including encryption and checksums.
 - `test_put_object_content_language` - ContentLanguage header preservation
 - `test_put_object_response_status_code` - HTTP 200 OK status validation
 
-### ✅ test_object_tagging.py (10 tests)
-Tests object tagging operations (Put/Get/Delete).
+### ✅ test_object_tagging.py (15 tests)
+Tests object tagging operations (Put/Get/Delete) with validation.
 
 - `test_put_object_tagging_success` - Basic tag setting
 - `test_put_object_tagging_non_existing_object` - NoSuchKey error
 - `test_put_object_tagging_replaces_existing` - Tag replacement behavior
+- `test_put_object_tagging_long_tags` - Tag key/value size limits (128/256 chars)
+- `test_put_object_tagging_duplicate_keys` - Duplicate key validation
+- `test_put_object_tagging_tag_count_limit` - Max 10 tags limit enforcement
 - `test_get_object_tagging_non_existing_object` - NoSuchKey error
 - `test_get_object_tagging_unset_tags` - Empty TagSet handling
 - `test_get_object_tagging_success` - Tag retrieval verification
+- `test_get_object_tagging_invalid_parent` - Invalid parent path handling
 - `test_delete_object_tagging_success` - Tag deletion
 - `test_delete_object_tagging_non_existing_object` - NoSuchKey error
+- `test_delete_object_tagging_success_status` - HTTP 200/204 status verification
 - `test_object_tagging_with_special_characters` - Special chars in tag values
 - `test_object_tagging_multiple_operations` - Multiple tag operations
 
@@ -904,6 +909,22 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 90% Complete! 🎉**
+
+**Batch 49 (2025-10-10)**: Added 5 tests - **REACHED 90.7%! ✅ PASSED 90%! Object Tagging COMPLETE!**
+- **test_object_tagging.py**: Added 5 validation tests to existing 10 tests (100% pass rate)
+- Tag validation tests (5 new tests):
+  - Tag key size limit (128 chars max) - InvalidTagKey/InvalidTag/InvalidArgument
+  - Tag value size limit (256 chars max) - InvalidTagValue/InvalidTag/InvalidArgument
+  - Duplicate tag keys rejected - InvalidTag/DuplicateTagKeys/InvalidArgument
+  - Tag count limit (10 tags max) - BadRequest/InvalidTag/InvalidArgument
+  - Invalid parent path handling - NoSuchKey for object under file
+  - HTTP status code verification - 200/204 for successful deletion
+- MinIO compatibility:
+  - All 5 new tests pass with multiple accepted error codes
+  - Validates S3 tagging limits: 128 char keys, 256 char values, 10 tags max
+  - Tests enforce API constraints client-side and server-side
+  - HTTP 200 or 204 accepted for successful operations
+  - Total 15 object tagging tests with comprehensive coverage
 
 **Batch 48 (2025-10-10)**: Added 11 tests - **REACHED 89.9%! ✅ PutObjectLegalHold COMPLETE!**
 - **test_object_legal_hold.py**: 11 object legal hold tests (100% pass rate)
