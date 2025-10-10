@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 487 | 82.3% |
-| **Remaining** | 105 | 17.7% |
+| **Ported** | 491 | 82.9% |
+| **Remaining** | 101 | 17.1% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (487 tests across 50 files)
+## Ported Tests (491 tests across 51 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -431,6 +431,14 @@ Tests DeleteObject edge cases and idempotency.
 - `test_delete_object_returns_delete_marker` - DeleteMarker field in response
 - `test_delete_object_response_status` - HTTP status code validation
 
+### ✅ test_delete_object_additional.py (4 tests)
+Tests DeleteObject advanced features and edge cases.
+
+- `test_delete_object_conditional_writes` - Conditional delete with IfMatch
+- `test_delete_object_directory_not_empty` - Directory deletion with nested objects
+- `test_delete_object_name_too_long` - Key length validation
+- `test_delete_object_nested_dir_versioned` - Versioned nested path deletion
+
 ### ✅ test_put_object_edge_cases.py (12 tests)
 Tests PutObject edge cases with headers, metadata, and content validation.
 
@@ -727,7 +735,7 @@ High-value categories to port next (ordered by priority):
 | **WORMProtection** | 11 | MEDIUM | Write-Once-Read-Many |
 | **PutObjectRetention** | 11 | MEDIUM | Object retention policies |
 | **AccessControl** | 11 | MEDIUM | Access control integration |
-| **DeleteObject** | 10 | LOW | Deletion edge cases |
+| **DeleteObject** | 6 | LOW | Deletion edge cases (12/10 ported - exceeded!) |
 | **ListObjectVersions** | 0 | LOW | Version listing (9/9 ported - ✅ COMPLETE!) |
 | **ListMultipartUploads** | 0 | LOW | List in-progress uploads (9/9 ported - ✅ COMPLETE!) |
 | **CreateBucket** | 9 | LOW | Bucket creation (basics covered) |
@@ -797,7 +805,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.4% (477/487 tests)
+- **Current Pass Rate**: 98.0% (481/491 tests)
 - **Known Failures**: 10 tests (3 CRC32C dependency, 2 path validation, 5 MinIO owner ID limitation, 3 SSE-S3 limitations, 3 object lock limitations, 2 policy condition limitations)
 
 ## Quality Standards
@@ -839,6 +847,35 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 82% Complete! 🎉**
+
+**Batch 44 (2025-10-10)**: Added 4 tests - **REACHED 82.9%!**
+- **test_delete_object_additional.py**: 4 DeleteObject additional tests (100% pass rate)
+- Conditional delete operations:
+  - IfMatch parameter for conditional deletion
+  - MinIO doesn't enforce IfMatch on DeleteObject (implementation-specific)
+  - AWS returns PreconditionFailed for mismatched ETag
+  - Test handles both behaviors gracefully
+- Directory edge cases:
+  - Directory deletion with nested objects
+  - POSIX backends may return DirectoryNotEmpty error
+  - S3 backends typically succeed or return NoSuchKey
+  - Implementation-specific behavior documented
+- Key length validation:
+  - DeleteObject with 300 character key name
+  - Some implementations enforce key length limits
+  - MinIO accepts 300 char keys (within S3 1024 byte limit)
+  - boto3 may perform client-side validation
+- Versioned nested paths:
+  - Delete specific version of nested directory object (foo/bar/baz)
+  - VersionId returned in delete response
+  - Requires versioning support on bucket
+  - MinIO versioning compatibility verified
+- MinIO compatibility:
+  - All 4 tests pass with implementation-aware assertions
+  - IfMatch not enforced (differs from AWS)
+  - Directory deletion behavior varies by backend
+  - Key length validation lenient
+  - Versioning works for nested paths
 
 **Batch 43 (2025-10-10)**: Added 8 tests - **REACHED 82.3%! ✅ ListMultipartUploads COMPLETE!**
 - **test_list_multipart_uploads_advanced.py**: 8 ListMultipartUploads advanced tests (100% pass rate)
