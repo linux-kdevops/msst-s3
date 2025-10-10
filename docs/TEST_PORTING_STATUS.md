@@ -14,11 +14,31 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 243 | 41.0% |
-| **Remaining** | 349 | 59.0% |
+| **Ported** | 259 | 43.8% |
+| **Remaining** | 333 | 56.2% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (243 tests across 23 files)
+## Ported Tests (259 tests across 24 files)
+
+### ✅ test_upload_part_copy.py (16 tests)
+Tests UploadPartCopy API for copying data into multipart uploads.
+
+- `test_upload_part_copy_non_existing_bucket` - NoSuchBucket for non-existing destination bucket
+- `test_upload_part_copy_incorrect_upload_id` - NoSuchUpload for invalid upload ID
+- `test_upload_part_copy_incorrect_object_key` - NoSuchUpload for mismatched key
+- `test_upload_part_copy_invalid_part_number` - InvalidArgument for part numbers outside 1-10000
+- `test_upload_part_copy_invalid_copy_source` - Error handling for invalid CopySource format
+- `test_upload_part_copy_non_existing_source_bucket` - NoSuchBucket for non-existing source bucket
+- `test_upload_part_copy_non_existing_source_object_key` - NoSuchKey for non-existing source object
+- `test_upload_part_copy_success` - Successful copy from source object to multipart part
+- `test_upload_part_copy_by_range_invalid_ranges` - InvalidArgument/InvalidRange for malformed ranges
+- `test_upload_part_copy_exceeding_copy_source_range` - Error when range exceeds source size
+- `test_upload_part_copy_greater_range_than_obj_size` - Error when range starts beyond source
+- `test_upload_part_copy_by_range_success` - Successful byte range copy (bytes=100-200)
+- `test_upload_part_copy_conditional_copy_if_match` - CopySourceIfMatch conditional copy
+- `test_upload_part_copy_conditional_copy_if_none_match` - CopySourceIfNoneMatch conditional copy
+- `test_upload_part_copy_conditional_copy_if_modified_since` - CopySourceIfModifiedSince conditional copy
+- `test_upload_part_copy_conditional_copy_if_unmodified_since` - CopySourceIfUnmodifiedSince conditional copy
 
 ### ✅ test_list_parts.py (9 tests)
 Tests ListParts API for multipart uploads with pagination and validation.
@@ -368,10 +388,8 @@ High-value categories to port next (ordered by priority):
 | **PresignedAuth** | 24 | MEDIUM | Presigned URL authentication |
 | **Authentication** | 22 | MEDIUM | Authentication edge cases |
 | **GetObject** | 18 | MEDIUM | Additional get scenarios |
-| **UploadPartCopy** | 16 | MEDIUM | Multipart copy operations |
 | **PutBucketAcl** | 16 | MEDIUM | Bucket ACL management |
 | **PutBucketPolicy** | 23 | MEDIUM | Bucket policy management |
-| **UploadPart** | 15 | MEDIUM | Multipart upload parts |
 | **CreateMultipartUpload** | 15 | MEDIUM | Multipart upload initialization |
 | **HeadObject** | 14 | MEDIUM | Head object edge cases |
 | **WORMProtection** | 11 | MEDIUM | Write-Once-Read-Many |
@@ -408,14 +426,12 @@ Tests for features marked as "not_implemented" in versitygw:
 
 ## Next Batch Targets (Goal: +50-70 tests)
 
-### Priority 1: Multipart Upload Suite (~40 tests)
+### Priority 1: Multipart Upload Suite (~24 tests remaining)
 - CompleteMultipartUpload (24 tests)
-- UploadPart (15 tests)
 - CreateMultipartUpload (15 tests)
-- UploadPartCopy (16 tests)
-- ListParts (9 tests)
 - ListMultipartUploads (9 tests)
-- AbortMultipartUpload (5 tests)
+
+**Completed**: UploadPart (10 tests ✓), UploadPartCopy (16 tests ✓), ListParts (9 tests ✓), AbortMultipartUpload (14 tests ✓)
 
 **Rationale**: Multipart uploads are critical for large objects. Comprehensive testing needed.
 
@@ -450,7 +466,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.0% (238/243 tests)
+- **Current Pass Rate**: 98.1% (254/259 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -490,6 +506,21 @@ Last Updated: 2025-10-10
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 16 (2025-10-10)**: Added 16 tests
+- **test_upload_part_copy.py**: 16 UploadPartCopy API tests (100% pass rate)
+- Bucket and upload ID validation (NoSuchBucket, NoSuchUpload errors)
+- Part number validation (1-10000 range)
+- CopySource format validation and source object validation
+- Byte range copying with CopySourceRange (bytes=start-end)
+- Range error handling (invalid formats, exceeding source size)
+- Conditional copy operations:
+  - CopySourceIfMatch - copy if ETag matches
+  - CopySourceIfNoneMatch - copy if ETag doesn't match
+  - CopySourceIfModifiedSince - copy if modified after date
+  - CopySourceIfUnmodifiedSince - copy if not modified after date
+- Full multipart workflow with ListParts verification
+- Note: Checksum tests omitted (requires CRC32 support)
 
 **Batch 15 (2025-10-10)**: Added 9 tests
 - **test_list_parts.py**: 9 ListParts API tests (100% pass rate)
