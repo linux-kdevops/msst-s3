@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 460 | 77.7% |
-| **Remaining** | 132 | 22.3% |
+| **Ported** | 470 | 79.4% |
+| **Remaining** | 122 | 20.6% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (460 tests across 46 files)
+## Ported Tests (470 tests across 47 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -517,6 +517,20 @@ Tests CopyObject edge cases and error conditions.
 - `test_copy_object_large_object` - Large object (1MB) copy
 - `test_copy_object_returns_etag` - ETag in response
 
+### ✅ test_copy_object_checksums.py (10 tests)
+Tests CopyObject with checksum algorithms and validation.
+
+- `test_copy_object_invalid_checksum_algorithm` - Invalid ChecksumAlgorithm (boto3 validates client-side)
+- `test_copy_object_create_checksum_on_copy` - Create checksum during copy with ChecksumAlgorithm
+- `test_copy_object_should_copy_the_existing_checksum` - Preserve existing checksum from source
+- `test_copy_object_should_replace_the_existing_checksum` - Replace CRC32 with SHA256
+- `test_copy_object_to_itself_by_replacing_the_checksum` - Copy to self with new checksum
+- `test_copy_object_checksum_with_crc32` - CRC32 checksum creation during copy
+- `test_copy_object_checksum_across_buckets` - Checksum preservation in cross-bucket copy
+- `test_copy_object_checksum_metadata_directive` - Checksum with MetadataDirective=COPY
+- `test_copy_object_checksum_response_fields` - Response structure validation with checksum
+- `test_copy_object_multiple_checksum_algorithms` - SHA1 and SHA256 algorithms
+
 ### ✅ test_delete_objects.py (10 tests)
 Tests DeleteObjects (batch delete) API operations.
 
@@ -671,7 +685,7 @@ High-value categories to port next (ordered by priority):
 | Category | Count | Priority | Notes |
 |----------|-------|----------|-------|
 | **Versioning** | 0 | HIGH | Object versioning (51/51 ported - ✅ COMPLETE!) |
-| **CopyObject** | 7 | HIGH | Additional copy scenarios (29/26 ported - exceeded!) |
+| **CopyObject** | 0 | HIGH | Additional copy scenarios (39/26 ported - ✅ EXCEEDED & COMPLETE!) |
 | **CompleteMultipartUpload** | 0 | HIGH | Multipart completion (34/34 ported - ✅ COMPLETE!) |
 | **PutObject** | 0 | HIGH | Additional put scenarios (45/25 ported - ✅ EXCEEDED & COMPLETE!) |
 | **PresignedAuth** | 24 | MEDIUM | Presigned URL authentication |
@@ -755,7 +769,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 97.8% (450/460 tests)
+- **Current Pass Rate**: 97.9% (460/470 tests)
 - **Known Failures**: 10 tests (3 CRC32C dependency, 2 path validation, 5 MinIO owner ID limitation, 3 SSE-S3 limitations, 3 object lock limitations, 2 policy condition limitations)
 
 ## Quality Standards
@@ -796,7 +810,44 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
 
-**🎉 MILESTONE: 77% Complete! 🎉**
+**🎉 MILESTONE: 79% Complete! 🎉**
+
+**Batch 40 (2025-10-10)**: Added 10 tests - **REACHED 79.4%! ✅ CopyObject COMPLETE!**
+- **test_copy_object_checksums.py**: 10 CopyObject checksum tests (100% pass rate)
+- Checksum algorithm support:
+  - ChecksumAlgorithm parameter (SHA1, SHA256, CRC32)
+  - Invalid algorithm handled by boto3 client-side validation
+  - Creating checksums during copy operation
+  - MinIO supports all checksum algorithms
+- Checksum preservation:
+  - Copy preserves existing checksum from source object
+  - Checksum fields maintained in copy response and HeadObject
+  - Works with both same-bucket and cross-bucket copies
+- Checksum replacement:
+  - Replace CRC32 with SHA256 during copy
+  - Copy to self with MetadataDirective=REPLACE and new checksum
+  - Original checksum replaced with new algorithm
+- Cross-bucket checksums:
+  - Checksum preserved when copying between buckets
+  - Both source and destination maintain checksum integrity
+- MetadataDirective behavior:
+  - MetadataDirective=COPY preserves source checksum (default)
+  - MetadataDirective=REPLACE allows new checksum specification
+- Response validation:
+  - ChecksumSHA256, ChecksumCRC32, ChecksumSHA1 fields in response
+  - Response structure includes ETag and checksum fields
+  - HTTP 200 status code for successful copy
+- Multiple algorithms:
+  - SHA1 and SHA256 both supported
+  - Can specify different algorithms for different copies
+  - Checksum format validated (base64-encoded)
+- MinIO compatibility:
+  - All checksum algorithms working correctly
+  - Checksum preservation and replacement both functional
+  - Cross-bucket checksum copies working
+  - Response fields match expected structure
+- **🎉 COPYOBJECT CATEGORY COMPLETE: 39/26 tests ported (100% exceeded & complete!)! 🎉**
+- Seven categories now 100% complete: Versioning, PutBucketAcl, PutBucketPolicy, CompleteMultipartUpload, CreateMultipartUpload, PutObject, CopyObject!
 
 **Batch 39 (2025-10-10)**: Added 10 tests - **REACHED 77.7%! ✅ PutObject COMPLETE!**
 - **test_put_object_additional.py**: 10 PutObject additional feature tests (7 passed, 3 skipped)
