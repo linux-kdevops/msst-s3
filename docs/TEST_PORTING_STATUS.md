@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 471 | 79.6% |
-| **Remaining** | 121 | 20.4% |
+| **Ported** | 479 | 80.9% |
+| **Remaining** | 113 | 19.1% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (471 tests across 48 files)
+## Ported Tests (479 tests across 49 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -492,6 +492,18 @@ Tests bucket-level operations (Create/Delete/Head/List).
 - `test_create_delete_bucket_lifecycle` - Complete lifecycle test
 - `test_bucket_operations_case_sensitivity` - Bucket name case sensitivity
 
+### ✅ test_create_bucket_advanced.py (8 tests)
+Tests CreateBucket with advanced options and validation.
+
+- `test_create_bucket_invalid_bucket_name` - Invalid bucket name validation (uppercase, underscores, length, etc.)
+- `test_create_bucket_existing_bucket` - BucketAlreadyExists for duplicate bucket names
+- `test_create_bucket_owned_by_you` - BucketAlreadyOwnedByYou when recreating own bucket
+- `test_create_bucket_invalid_ownership` - Invalid ObjectOwnership value (boto3 client-side validation)
+- `test_create_bucket_ownership_with_acl` - ObjectOwnership with ACL combination (MinIO allows, AWS blocks)
+- `test_create_bucket_default_acl` - Default ACL is private with FULL_CONTROL for owner
+- `test_create_bucket_non_default_acl` - Canned ACLs (private, public-read)
+- `test_create_bucket_default_object_lock` - ObjectLockEnabledForBucket at creation
+
 ### ✅ test_get_object_edge_cases.py (12 tests)
 Tests GetObject edge cases and response validation.
 
@@ -774,7 +786,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 97.9% (461/471 tests)
+- **Current Pass Rate**: 98.1% (469/479 tests)
 - **Known Failures**: 10 tests (3 CRC32C dependency, 2 path validation, 5 MinIO owner ID limitation, 3 SSE-S3 limitations, 3 object lock limitations, 2 policy condition limitations)
 
 ## Quality Standards
@@ -815,7 +827,40 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
 
-**🎉 MILESTONE: 79% Complete! 🎉**
+**🎉 MILESTONE: 80% Complete! 🎉**
+
+**Batch 42 (2025-10-10)**: Added 8 tests - **REACHED 80.9%!**
+- **test_create_bucket_advanced.py**: 8 CreateBucket advanced tests (100% pass rate)
+- Bucket name validation:
+  - Uppercase letters, underscores not allowed
+  - Consecutive dots, leading/trailing hyphens rejected
+  - Min 3 chars, max 63 chars enforced
+  - IP address format not allowed
+  - boto3 validates some rules client-side
+- Duplicate bucket handling:
+  - BucketAlreadyExists for existing bucket names
+  - BucketAlreadyOwnedByYou when recreating own bucket
+  - Error codes vary by implementation
+- ObjectOwnership settings:
+  - Invalid ObjectOwnership validated by boto3 client-side
+  - BucketOwnerEnforced with ACL: AWS blocks, MinIO allows
+  - Implementation-specific behavior documented
+- ACL configuration:
+  - Default ACL is private with FULL_CONTROL for owner
+  - Canned ACLs supported (private, public-read)
+  - MinIO may return empty owner ID
+  - public-read may be blocked by ObjectOwnership settings
+- Object lock:
+  - ObjectLockEnabledForBucket at creation
+  - Cannot enable after bucket created
+  - GetObjectLockConfiguration verifies status
+  - MinIO support limited
+- MinIO compatibility:
+  - Bucket name validation working
+  - Duplicate errors consistent
+  - ObjectOwnership validation lenient
+  - ACL configuration functional
+  - Object lock limited support
 
 **Batch 41 (2025-10-10)**: Added 1 test - **REACHED 79.6%! ✅ ListObjectVersions COMPLETE!**
 - **test_list_object_versions_additional.py**: 1 ListObjectVersions test (100% pass rate)
