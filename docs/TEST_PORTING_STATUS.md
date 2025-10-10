@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 419 | 70.8% |
-| **Remaining** | 173 | 29.2% |
+| **Ported** | 429 | 72.5% |
+| **Remaining** | 163 | 27.5% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (419 tests across 41 files)
+## Ported Tests (429 tests across 42 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -142,6 +142,20 @@ Tests CompleteMultipartUpload with checksums, large objects, and content verific
 - `test_complete_multipart_upload_out_of_order_parts` - Parts uploaded out of order
 - `test_complete_multipart_upload_duplicate_upload` - Duplicate complete returns NoSuchUpload
 - `test_complete_multipart_upload_content_verification` - SHA256 content integrity
+
+### ✅ test_complete_multipart_special.py (10 tests)
+Tests CompleteMultipartUpload special cases and edge conditions.
+
+- `test_complete_multipart_upload_single_part_minimum` - Single part multipart upload (6MB minimum)
+- `test_complete_multipart_upload_maximum_part_number` - Part number 10000 (maximum allowed)
+- `test_complete_multipart_upload_last_part_small` - Last part < 5MB (allowed)
+- `test_complete_multipart_upload_middle_part_small_fails` - Middle part < 5MB (EntityTooSmall)
+- `test_complete_multipart_upload_concurrent_complete_attempts` - Second complete returns NoSuchUpload
+- `test_complete_multipart_upload_sparse_part_numbers` - Non-consecutive part numbers (1, 5, 10)
+- `test_complete_multipart_upload_with_empty_object` - Empty part creates zero-length object
+- `test_complete_multipart_upload_many_parts` - 50 parts (250MB total)
+- `test_complete_multipart_upload_missing_required_parts` - Non-existing parts fail (InvalidPart)
+- `test_complete_multipart_upload_parts_reordered_in_complete` - Parts array sorting requirement
 
 ### ✅ test_versioning_attributes.py (4 tests)
 Tests GetObjectAttributes with versioning and versioning edge cases.
@@ -611,7 +625,7 @@ High-value categories to port next (ordered by priority):
 |----------|-------|----------|-------|
 | **Versioning** | 0 | HIGH | Object versioning (51/51 ported - ✅ COMPLETE!) |
 | **CopyObject** | 7 | HIGH | Additional copy scenarios (29/26 ported - exceeded!) |
-| **CompleteMultipartUpload** | 16 | HIGH | Multipart completion (18/34 ported) |
+| **CompleteMultipartUpload** | 6 | HIGH | Multipart completion (28/34 ported - 82%!) |
 | **PutObject** | 2 | HIGH | Additional put scenarios (35/25 ported - exceeded!) |
 | **PresignedAuth** | 24 | MEDIUM | Presigned URL authentication |
 | **Authentication** | 22 | MEDIUM | Authentication edge cases |
@@ -694,7 +708,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 97.6% (409/419 tests)
+- **Current Pass Rate**: 97.7% (419/429 tests)
 - **Known Failures**: 10 tests (3 CRC32C dependency, 2 path validation, 5 MinIO owner ID limitation, 2 policy condition limitations)
 
 ## Quality Standards
@@ -735,7 +749,35 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
 
-**🎉 MILESTONE: 70% Complete! 🎉**
+**🎉 MILESTONE: 72% Complete! 🎉**
+
+**Batch 35 (2025-10-10)**: Added 10 tests - **REACHED 72.5%!**
+- **test_complete_multipart_special.py**: 10 CompleteMultipartUpload special case tests (100% pass rate)
+- Part number edge cases:
+  - Single part multipart upload (6MB minimum for single part)
+  - Maximum part number 10000 (upper limit)
+  - Sparse part numbers (1, 5, 10 - non-consecutive allowed)
+  - Part numbers don't need to be consecutive
+- Part size requirements:
+  - Last part can be < 5MB (1KB tested)
+  - Middle parts must be >= 5MB (EntityTooSmall if violated)
+  - First and middle parts enforce 5MB minimum
+  - Only final part exempt from size minimum
+- Concurrent operations:
+  - Second complete attempt returns NoSuchUpload (upload already consumed)
+  - UploadId becomes invalid after successful completion
+- Assembly edge cases:
+  - Empty part creates zero-length object (implementation-specific)
+  - 50 parts (250MB total) with SHA256 integrity verification
+  - Missing parts fail with InvalidPart error
+  - Parts array must be sorted by PartNumber (or MinIO may accept unsorted)
+- MinIO compatibility:
+  - All 10 tests passed successfully
+  - Properly enforces part size minimums (EntityTooSmall for violations)
+  - Accepts sparse part numbers and non-consecutive uploads
+  - Empty parts may not be fully supported (test passes but behavior varies)
+  - MinIO may accept unsorted parts array (AWS requires sorted)
+- Note: CompleteMultipartUpload 28/34 ported (82% complete)
 
 **Batch 34 (2025-10-10)**: Added 3 tests - **REACHED 70.8%! ✅ PutBucketPolicy COMPLETE!**
 - **test_put_bucket_policy_conditions.py**: 3 policy condition tests (2 passed, 1 skipped)
