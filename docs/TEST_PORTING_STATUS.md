@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 164 | 27.7% |
-| **Remaining** | 428 | 72.3% |
+| **Ported** | 176 | 29.7% |
+| **Remaining** | 416 | 70.3% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (164 tests across 16 files)
+## Ported Tests (176 tests across 17 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -248,6 +248,22 @@ Tests ListObjects v1 API (older API, still widely used).
 - `test_list_objects_empty_bucket` - Empty bucket handling
 - `test_list_objects_prefix_and_delimiter` - Combined prefix + delimiter
 
+### ✅ test_object_naming.py (12 tests)
+Tests object naming and path edge cases.
+
+- `test_put_object_overwrite_dir_obj` - Directory/file conflicts (MinIO accepts)
+- `test_put_object_overwrite_file_obj` - File/directory conflicts (MinIO accepts)
+- `test_put_object_overwrite_file_obj_with_nested_obj` - Nested path conflicts
+- `test_put_object_dir_obj_with_data` - Directory objects with data
+- `test_put_object_with_slashes` - Slash patterns (MinIO rejects leading/double)
+- `test_put_object_leading_slash` - Leading slash handling
+- `test_put_object_consecutive_slashes` - Consecutive slashes validation
+- `test_put_object_empty_key_segments` - Empty path segments
+- `test_put_object_dot_segments` - Dot segments (. and ..)
+- `test_put_object_overwrite_same_key` - Object overwrite behavior
+- `test_put_object_case_sensitive_keys` - Case sensitivity
+- `test_put_object_unicode_in_key` - Unicode character support
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -344,7 +360,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 96.9% (159/164 tests)
+- **Current Pass Rate**: 97.2% (171/176 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -384,6 +400,9 @@ Last Updated: 2025-10-09
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 9 (2025-10-09)**: Added 12 tests
+- **test_object_naming.py**: 12 object naming and path tests (100% pass rate)
 
 **Batch 8 (2025-10-09)**: Added 12 tests
 - **test_list_objects_v1.py**: 12 ListObjects v1 API tests (100% pass rate)
