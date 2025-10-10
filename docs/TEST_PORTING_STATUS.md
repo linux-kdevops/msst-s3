@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 204 | 34.5% |
-| **Remaining** | 388 | 65.5% |
+| **Ported** | 214 | 36.1% |
+| **Remaining** | 378 | 63.9% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (204 tests across 19 files)
+## Ported Tests (214 tests across 20 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -300,6 +300,20 @@ Tests AbortMultipartUpload and ListMultipartUploads operations.
 - `test_abort_multipart_twice` - Idempotent double abort (MinIO)
 - `test_list_multipart_uploads_with_delimiter` - Delimiter for CommonPrefixes
 
+### ✅ test_upload_part.py (10 tests)
+Tests UploadPart API edge cases and error handling.
+
+- `test_upload_part_non_existing_bucket` - NoSuchBucket error
+- `test_upload_part_invalid_part_number` - Part number validation (1-10000)
+- `test_upload_part_non_existing_mp_upload` - NoSuchUpload for invalid upload ID
+- `test_upload_part_non_existing_key` - NoSuchUpload for wrong key
+- `test_upload_part_success` - Successful part upload with ETag
+- `test_upload_part_multiple_parts` - Upload parts in any order
+- `test_upload_part_overwrite_part` - Overwriting same part number
+- `test_upload_part_empty_body` - Empty part handling (implementation-specific)
+- `test_upload_part_response_metadata` - Response structure validation
+- `test_upload_part_after_abort` - NoSuchUpload after abort
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -396,7 +410,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 97.5% (199/204 tests)
+- **Current Pass Rate**: 97.7% (209/214 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -436,6 +450,13 @@ Last Updated: 2025-10-10
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 12 (2025-10-10)**: Added 10 tests
+- **test_upload_part.py**: 10 UploadPart API tests (100% pass rate)
+- Part number validation (1-10000)
+- Upload ID and key validation
+- Part overwriting and ordering
+- Error condition handling
 
 **Batch 11 (2025-10-10)**: Added 14 tests
 - **test_multipart_abort_list.py**: 14 multipart abort and list tests (100% pass rate)
