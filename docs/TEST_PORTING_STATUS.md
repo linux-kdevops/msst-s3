@@ -14,11 +14,25 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 312 | 52.7% |
-| **Remaining** | 280 | 47.3% |
+| **Ported** | 322 | 54.4% |
+| **Remaining** | 270 | 45.6% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (312 tests across 29 files)
+## Ported Tests (322 tests across 30 files)
+
+### ✅ test_bucket_versioning_config.py (10 tests)
+Tests bucket versioning configuration (PutBucketVersioning and GetBucketVersioning).
+
+- `test_put_bucket_versioning_non_existing_bucket` - MinIO may succeed silently or return NoSuchBucket
+- `test_put_bucket_versioning_invalid_status` - IllegalVersioningConfigurationException for invalid status
+- `test_put_bucket_versioning_success_enabled` - Enable versioning on bucket
+- `test_put_bucket_versioning_success_suspended` - Suspend versioning on bucket
+- `test_get_bucket_versioning_non_existing_bucket` - NoSuchBucket for non-existing bucket
+- `test_get_bucket_versioning_empty_response` - Empty/absent Status for unconfigured versioning
+- `test_get_bucket_versioning_success` - Get versioning status (Enabled)
+- `test_versioning_delete_bucket_not_empty` - BucketNotEmpty/VersionedBucketNotEmpty error
+- `test_bucket_versioning_toggle` - Toggle versioning (Enabled → Suspended → Enabled)
+- `test_versioning_mfa_delete_not_supported` - MFADelete often ignored by S3-compatible services
 
 ### ✅ test_list_object_versions.py (8 tests)
 Tests ListObjectVersions API for retrieving object version history.
@@ -454,7 +468,7 @@ High-value categories to port next (ordered by priority):
 
 | Category | Count | Priority | Notes |
 |----------|-------|----------|-------|
-| **Versioning** | 20 | HIGH | Object versioning (31/51 ported) |
+| **Versioning** | 10 | HIGH | Object versioning (41/51 ported - 80%!) |
 | **CopyObject** | 7 | HIGH | Additional copy scenarios (29/26 ported - exceeded!) |
 | **CompleteMultipartUpload** | 24 | HIGH | Multipart completion with checksums |
 | **PutObject** | 2 | HIGH | Additional put scenarios (35/25 ported - exceeded!) |
@@ -539,7 +553,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.4% (307/312 tests)
+- **Current Pass Rate**: 98.4% (317/322 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -581,6 +595,27 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 50% Complete! 🎉**
+
+**Batch 22 (2025-10-10)**: Added 10 tests - **REACHED 54.4%!**
+- **test_bucket_versioning_config.py**: 10 bucket versioning configuration tests (100% pass rate)
+- PutBucketVersioning operations:
+  - Enable versioning on bucket (Status="Enabled")
+  - Suspend versioning on bucket (Status="Suspended")
+  - Toggle versioning multiple times (Enabled → Suspended → Enabled)
+  - Invalid status value → IllegalVersioningConfigurationException
+  - Non-existing bucket behavior (MinIO may succeed silently or error)
+- GetBucketVersioning operations:
+  - Get versioning status (Enabled/Suspended)
+  - Unconfigured versioning returns empty/absent Status field
+  - Non-existing bucket → NoSuchBucket error
+- Bucket deletion with versions:
+  - BucketNotEmpty or VersionedBucketNotEmpty error
+- MFADelete configuration:
+  - Often not supported by S3-compatible services (ignored or rejected)
+- MinIO compatibility notes:
+  - MinIO returns IllegalVersioningConfigurationException for invalid status
+  - PutBucketVersioning on non-existing bucket may succeed silently
+- Note: Versioning tests now at 80% completion! (41/51 ported)
 
 **Batch 21 (2025-10-10)**: Added 8 tests - **REACHED 52.7%!**
 - **test_list_object_versions.py**: 8 ListObjectVersions API tests (100% pass rate)
