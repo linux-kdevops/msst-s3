@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 176 | 29.7% |
-| **Remaining** | 416 | 70.3% |
+| **Ported** | 190 | 32.1% |
+| **Remaining** | 402 | 67.9% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (176 tests across 17 files)
+## Ported Tests (190 tests across 18 files)
 
 ### ✅ test_checksums.py (8 tests)
 Tests checksum functionality across multiple algorithms.
@@ -264,6 +264,24 @@ Tests object naming and path edge cases.
 - `test_put_object_case_sensitive_keys` - Case sensitivity
 - `test_put_object_unicode_in_key` - Unicode character support
 
+### ✅ test_get_object_advanced.py (14 tests)
+Tests GetObject advanced features and response overrides.
+
+- `test_get_object_response_cache_control_override` - Cache-Control override
+- `test_get_object_response_content_disposition_override` - Content-Disposition override
+- `test_get_object_response_content_encoding_override` - Content-Encoding override
+- `test_get_object_response_content_language_override` - Content-Language override
+- `test_get_object_response_content_type_override` - Content-Type override
+- `test_get_object_response_expires_override` - Expires header override
+- `test_get_object_directory_success` - Directory object retrieval
+- `test_get_object_non_existing_dir_object` - NoSuchKey for missing directory
+- `test_get_object_invalid_parent` - Non-existing parent path
+- `test_get_object_by_range_resp_status` - 206 Partial Content status
+- `test_get_object_multiple_response_overrides` - Multiple overrides together
+- `test_get_object_with_if_match_success` - If-Match conditional
+- `test_get_object_with_if_match_fails` - If-Match PreconditionFailed
+- `test_get_object_with_checksums` - Checksum handling
+
 ## Remaining Tests by Category
 
 High-value categories to port next (ordered by priority):
@@ -360,7 +378,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 97.2% (171/176 tests)
+- **Current Pass Rate**: 97.4% (185/190 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -400,6 +418,9 @@ Last Updated: 2025-10-09
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 10 (2025-10-09)**: Added 14 tests
+- **test_get_object_advanced.py**: 14 GetObject advanced feature tests (100% pass rate)
 
 **Batch 9 (2025-10-09)**: Added 12 tests
 - **test_object_naming.py**: 12 object naming and path tests (100% pass rate)
