@@ -14,11 +14,27 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 259 | 43.8% |
-| **Remaining** | 333 | 56.2% |
+| **Ported** | 271 | 45.8% |
+| **Remaining** | 321 | 54.2% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (259 tests across 24 files)
+## Ported Tests (271 tests across 25 files)
+
+### ✅ test_versioning_basic.py (12 tests)
+Tests basic S3 versioning functionality.
+
+- `test_versioning_put_object_success` - PutObject returns VersionId when versioning enabled
+- `test_versioning_put_object_suspended_null_version_id` - Suspended versioning behavior
+- `test_versioning_put_object_null_version_id_obj` - Null version objects before versioning enabled
+- `test_versioning_put_object_overwrite_null_version_id_obj` - Overwriting null versions after enabling
+- `test_versioning_get_object_success` - GetObject with VersionId parameter
+- `test_versioning_get_object_invalid_version_id` - NoSuchVersion for invalid version IDs
+- `test_versioning_get_object_null_version_id_obj` - Getting null version with VersionId=null
+- `test_versioning_head_object_success` - HeadObject with VersionId parameter
+- `test_versioning_head_object_invalid_version_id` - Error handling for invalid version IDs
+- `test_versioning_head_object_without_version_id` - HeadObject returns latest version
+- `test_versioning_delete_object_delete_object_version` - Permanently delete specific version
+- `test_versioning_delete_object_non_existing_object` - Delete non-existing object behavior
 
 ### ✅ test_upload_part_copy.py (16 tests)
 Tests UploadPartCopy API for copying data into multipart uploads.
@@ -381,7 +397,7 @@ High-value categories to port next (ordered by priority):
 
 | Category | Count | Priority | Notes |
 |----------|-------|----------|-------|
-| **Versioning** | 51 | HIGH | Object versioning core functionality |
+| **Versioning** | 39 | HIGH | Object versioning (12/51 ported) |
 | **CopyObject** | 18 | HIGH | Additional copy scenarios (already have 8) |
 | **CompleteMultipartUpload** | 24 | HIGH | Multipart completion with checksums |
 | **PutObject** | 13 | HIGH | Additional put scenarios (basic covered) |
@@ -466,7 +482,7 @@ All ported tests are validated against MinIO S3:
 
 - **MinIO Version**: RELEASE.2024-09-22T00-33-43Z
 - **Endpoint**: http://localhost:9000
-- **Current Pass Rate**: 98.1% (254/259 tests)
+- **Current Pass Rate**: 98.2% (266/271 tests)
 - **Known Failures**: 5 tests (3 CRC32C dependency, 2 path validation)
 
 ## Quality Standards
@@ -506,6 +522,20 @@ Last Updated: 2025-10-10
 Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 
 ## Recent Additions (Latest Batches)
+
+**Batch 17 (2025-10-10)**: Added 12 tests
+- **test_versioning_basic.py**: 12 basic versioning tests (100% pass rate)
+- PutObject with versioning enabled (returns VersionId)
+- Versioning suspended behavior (null version IDs)
+- Null version objects (created before versioning enabled)
+- GetObject/HeadObject with VersionId parameter
+- Version-specific retrieval and metadata access
+- Deleting specific object versions permanently
+- MinIO compatibility notes:
+  - MinIO may not return VersionId for suspended/null versions
+  - MinIO returns "400" error code instead of "InvalidArgument" for some errors
+  - MinIO doesn't create delete markers for non-existing objects
+- Note: 39 more versioning tests remain (CopyObject, DeleteObjects, DeleteMarkers, etc.)
 
 **Batch 16 (2025-10-10)**: Added 16 tests
 - **test_upload_part_copy.py**: 16 UploadPartCopy API tests (100% pass rate)
