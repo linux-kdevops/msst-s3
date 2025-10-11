@@ -103,6 +103,7 @@ class TestDiscovery:
         "microservices": (2701, 2800),
         "cost_optimization": (2801, 2900),
         "hybrid_cloud": (2901, 3000),
+        "production": (3001, 3100),
     }
 
     def __init__(self, test_dir: Path):
