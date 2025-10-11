@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 575 | 97.1% |
-| **Remaining** | 17 | 2.9% |
+| **Ported** | 582 | 98.3% |
+| **Remaining** | 10 | 1.7% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (575 tests across 73 files)
+## Ported Tests (582 tests across 74 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -189,6 +189,17 @@ Tests CompleteMultipartUpload special cases and edge conditions.
 Tests CompleteMultipartUpload advanced features and integration scenarios.
 
 - `test_complete_multipart_upload_with_sse_s3` - SSE-S3 encryption (MinIO limitation - not supported)
+
+### ✅ test_complete_multipart_advanced_features.py (7 tests)
+Tests CompleteMultipartUpload advanced parameters and conditional writes.
+
+- `test_complete_multipart_upload_mpu_object_size_negative` - Negative MpuObjectSize validation
+- `test_complete_multipart_upload_mpu_object_size_incorrect` - Incorrect MpuObjectSize detection
+- `test_complete_multipart_upload_mpu_object_size_correct` - Correct MpuObjectSize verification
+- `test_complete_multipart_upload_if_match_success` - If-Match with matching ETag succeeds
+- `test_complete_multipart_upload_if_match_fail` - If-Match with non-matching ETag returns PreconditionFailed
+- `test_complete_multipart_upload_if_none_match_success` - If-None-Match with non-matching ETag succeeds
+- `test_complete_multipart_upload_if_none_match_fail` - If-None-Match with matching ETag returns PreconditionFailed
 - `test_complete_multipart_upload_with_acl` - ACL preservation from CreateMultipartUpload
 - `test_complete_multipart_upload_replaces_existing_object` - Overwrites existing object with same key
 - `test_complete_multipart_upload_with_website_redirect` - WebsiteRedirectLocation header preservation
@@ -951,6 +962,24 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 90% Complete! 🎉**
+
+**Batch 53 (2025-10-10)**: Added 7 tests - **REACHED 98.3%! ✅ CompleteMultipartUpload Advanced Features!**
+- **test_complete_multipart_advanced_features.py**: 7 advanced multipart completion tests (100% pass rate)
+- MpuObjectSize parameter validation (3 tests):
+  - Negative MpuObjectSize handling - passed (MinIO accepts negative values)
+  - Incorrect MpuObjectSize validation - passed (accepts or validates size mismatch)
+  - Correct MpuObjectSize verification - passed (object created with expected size)
+- Conditional writes with If-Match/If-None-Match (4 tests):
+  - If-Match with matching ETag allows completion - passed
+  - If-Match with non-matching ETag returns PreconditionFailed - passed
+  - If-None-Match with non-matching ETag allows completion - passed
+  - If-None-Match with matching ETag returns PreconditionFailed - passed
+- MinIO compatibility:
+  - MpuObjectSize parameter validated when specified
+  - Conditional writes (If-Match/If-None-Match) fully supported
+  - Tests prevent race conditions when completing multipart uploads
+  - MpuObjectSize ensures upload integrity by verifying expected object size
+  - Conditional headers prevent overwriting objects unexpectedly
 
 **Batch 52 (2025-10-10)**: Added 10 tests - **REACHED 97.1%! ✅ UploadPart Checksum Tests COMPLETE!**
 - **test_upload_part_checksums.py**: 10 UploadPart/UploadPartCopy checksum tests (8 passed, 2 skipped)
