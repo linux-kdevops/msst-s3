@@ -414,6 +414,7 @@ class ResultFormatter:
 )
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.option("--list-tests", "-l", is_flag=True, help="List available tests")
+@click.option("--count", is_flag=True, help="Count total number of tests")
 @click.option(
     "--sdk",
     help="SDK to test against (e.g., 'boto3', 'aws-sdk-go-v2')",
@@ -435,6 +436,7 @@ def main(
     output_format,
     verbose,
     list_tests,
+    count,
     sdk,
     sdk_version,
     defconfig,
@@ -515,6 +517,24 @@ def main(
     # Setup test discovery
     test_dir = Path(__file__).parent.parent / "tests"
     discovery = TestDiscovery(test_dir)
+
+    # Count tests if requested
+    if count:
+        all_tests = discovery.get_all_tests()
+        total = len(all_tests)
+
+        # Count by group
+        groups_count = {}
+        for test_info in all_tests:
+            group_name = test_info["group"]
+            groups_count[group_name] = groups_count.get(group_name, 0) + 1
+
+        click.echo(f"Total tests: {total}")
+        if verbose:
+            click.echo("\nTests by category:")
+            for group_name in sorted(groups_count.keys()):
+                click.echo(f"  {group_name}: {groups_count[group_name]}")
+        return
 
     # List tests if requested
     if list_tests:
