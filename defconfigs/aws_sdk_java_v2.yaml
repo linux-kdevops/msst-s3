@@ -1,0 +1,11 @@
+---
+# Defconfig for aws-sdk-java-v2 (latest)
+# Java SDK v2 for AWS S3
+
+s3_sdk: "aws-sdk-java-v2"
+s3_sdk_version: "latest"
+
+# Expected capabilities for aws-sdk-java-v2
+# - Modern SDK with comprehensive S3 support
+# - Enhanced retry policies
+# - Full checksum validation support

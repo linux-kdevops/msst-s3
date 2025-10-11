@@ -1,0 +1,8 @@
+---
+# Defconfig for boto3 version 1.26.x
+# Python's boto3 SDK for AWS S3 - Specific version
+
+s3_sdk: "boto3"
+s3_sdk_version: "1.26.0"
+
+# boto3 1.26+ has stable modern S3 API support

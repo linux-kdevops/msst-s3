@@ -147,6 +147,12 @@ Pre-configured test profiles for common scenarios:
 - **docker-garage**: Test against Garage S3
 - **docker-seaweedfs**: Test against SeaweedFS S3
 
+**SDK Configurations:** *(see [docs/DEFCONFIGS.md](docs/DEFCONFIGS.md))*
+- **defconfigs/boto3_latest.yaml**: Test with latest Python boto3 SDK
+- **defconfigs/boto3_1.26.yaml**: Test with boto3 version 1.26.x
+- **defconfigs/aws_sdk_go_v2.yaml**: Test with Go SDK v2
+- **defconfigs/aws_sdk_java_v2.yaml**: Test with Java SDK v2
+
 ### Manual Configuration
 
 For custom configurations, use the interactive menu system:
@@ -326,6 +332,38 @@ Overall: 100.0% passed
 Reports are generated in:
 - `validation-report.json` - Machine-readable results
 - `validation-report.txt` - Human-readable summary
+
+## Testing Multiple AWS SDK Implementations
+
+MSST-S3 includes a sophisticated SDK capability system that allows testing against different AWS SDK implementations (boto3, aws-sdk-go-v2, aws-sdk-java-v2, etc.) while accounting for their behavioral differences.
+
+### Why Test Different SDKs?
+
+Different AWS SDK implementations have different behaviors:
+- URL encoding varies ('+' treated as space vs '+')
+- Different retry policies (standard, adaptive, legacy)
+- Different checksum algorithms (CRC32C vs MD5)
+- Different addressing styles (virtual-hosted vs path-style)
+
+The SDK capability system allows tests to adapt their expectations based on the SDK being used.
+
+### Testing with Different SDKs
+
+```bash
+# Test with boto3 (Python)
+python3 scripts/test-runner.py --sdk boto3 --sdk-version latest -v
+
+# Test with Go SDK v2
+python3 scripts/test-runner.py --sdk aws-sdk-go-v2 --sdk-version 1.30.0 -v
+
+# Test with Java SDK v2
+python3 scripts/test-runner.py --sdk aws-sdk-java-v2 --sdk-version latest -v
+
+# Use a defconfig file
+python3 scripts/test-runner.py --defconfig defconfigs/boto3_latest.yaml -v
+```
+
+**[📘 Complete SDK Capability Guide →](docs/SDK_CAPABILITIES.md)**
 
 ## Testing Multiple S3 Implementations
 
@@ -596,6 +634,9 @@ Comprehensive documentation is available in the `docs/` directory:
 | **[PRODUCTION_TEST_PLAN.md](docs/PRODUCTION_TEST_PLAN.md)** | Production validation strategies and critical path testing |
 | **[DOCKER_SETUP.md](docs/DOCKER_SETUP.md)** | Docker configuration for testing multiple S3 implementations |
 | **[VALIDATION_STRATEGIES.md](docs/VALIDATION_STRATEGIES.md)** | Different validation approaches and when to use them |
+| **[SDK_CAPABILITIES.md](docs/SDK_CAPABILITIES.md)** | SDK capability system guide - test against multiple AWS SDKs (boto3, Go, Java, etc.) |
+| **[SDK_IMPLEMENTATION_SUMMARY.md](docs/SDK_IMPLEMENTATION_SUMMARY.md)** | Implementation summary of the SDK capability system |
+| **[DEFCONFIGS.md](docs/DEFCONFIGS.md)** | Guide to using SDK defconfig files for different SDK implementations |
 
 ### Quick Links
 

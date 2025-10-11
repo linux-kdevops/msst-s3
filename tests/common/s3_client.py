@@ -11,6 +11,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# Default capabilities when none are provided
+DEFAULT_CAPABILITIES = {
+    "sigv4_chunked": True,
+    "unsigned_payload_allowed": True,
+    "virtual_hosted_default": True,
+    "list_objects_v1": False,
+    "list_objects_url_plus_treated_as_space": False,
+    "retry_mode": "standard",
+    "follows_301_region_redirect": True,
+    "follows_307_on_put": True,
+    "crc32c_default": False,
+}
+
+
 class S3Client:
     """
     Wrapper around boto3 S3 client with vendor-neutral operations
@@ -24,6 +38,7 @@ class S3Client:
         region: str = "us-east-1",
         use_ssl: bool = True,
         verify_ssl: bool = True,
+        capabilities: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize S3 client
@@ -35,9 +50,11 @@ class S3Client:
             region: AWS region
             use_ssl: Use SSL/TLS
             verify_ssl: Verify SSL certificates
+            capabilities: SDK capability profile (optional)
         """
         self.endpoint_url = endpoint_url
         self.region = region
+        self.capabilities = capabilities or DEFAULT_CAPABILITIES.copy()
 
         # Create boto3 client
         self.client = boto3.client(
@@ -60,6 +77,14 @@ class S3Client:
             use_ssl=use_ssl,
             verify=verify_ssl,
         )
+
+    def get_capability(self, key: str, default: Any = None) -> Any:
+        """Get a specific capability value"""
+        return self.capabilities.get(key, default)
+
+    def has_capability(self, key: str) -> bool:
+        """Check if a capability is enabled (truthy)"""
+        return bool(self.capabilities.get(key, False))
 
     # Bucket operations
     def create_bucket(self, bucket_name: str, **kwargs) -> Dict[str, Any]:
@@ -326,7 +351,9 @@ class S3Client:
             raise
 
     # Versioning operations
-    def put_bucket_versioning(self, bucket_name: str, config: Dict[str, Any]) -> Dict[str, Any]:
+    def put_bucket_versioning(
+        self, bucket_name: str, config: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Enable/disable bucket versioning"""
         try:
             response = self.client.put_bucket_versioning(

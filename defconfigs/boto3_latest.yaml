@@ -1,0 +1,14 @@
+---
+# Defconfig for boto3 (latest version)
+# Python's boto3 SDK for AWS S3
+
+s3_sdk: "boto3"
+s3_sdk_version: "latest"
+
+# Expected capabilities for modern boto3
+# (Will be auto-detected, this is for reference)
+# - Uses SigV4 with chunked encoding
+# - Supports UNSIGNED-PAYLOAD
+# - Defaults to virtual-hosted style
+# - Uses ListObjectsV2 by default
+# - Standard retry mode

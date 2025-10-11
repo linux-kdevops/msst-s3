@@ -22,6 +22,22 @@ from enum import Enum
 # Add tests directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tests"))
 
+# Import SDK capability support
+try:
+    from common.sdk_capabilities import (
+        SDKSpec,
+        build_caps_document,
+        load_caps_for_tests,
+    )
+
+    SDK_CAPS_AVAILABLE = True
+except ImportError:
+    SDK_CAPS_AVAILABLE = False
+    print(
+        "Warning: SDK capabilities module not available. Tests will use default capabilities.",
+        file=sys.stderr,
+    )
+
 
 class TestStatus(Enum):
     """Test execution status"""
@@ -132,8 +148,11 @@ class TestDiscovery:
 class TestExecutor:
     """Execute individual test cases"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(
+        self, config: Dict[str, Any], capabilities: Optional[Dict[str, Any]] = None
+    ):
         self.config = config
+        self.capabilities = capabilities
         self.s3_client = None
         self._setup_s3_client()
 
@@ -142,6 +161,11 @@ class TestExecutor:
         # Import common module for S3 client setup
         from common.s3_client import S3Client
 
+        # Extract capability profile if available
+        caps_profile = None
+        if self.capabilities and "profile" in self.capabilities:
+            caps_profile = self.capabilities["profile"]
+
         self.s3_client = S3Client(
             endpoint_url=self.config.get("s3_endpoint_url", "http://localhost:9000"),
             access_key=self.config.get("s3_access_key", "minioadmin"),
@@ -149,6 +173,7 @@ class TestExecutor:
             region=self.config.get("s3_region", "us-east-1"),
             use_ssl=self.config.get("s3_use_ssl", False),
             verify_ssl=self.config.get("s3_verify_ssl", True),
+            capabilities=caps_profile,
         )
 
     def execute_test(self, test_info: Dict) -> TestResult:
@@ -389,7 +414,31 @@ class ResultFormatter:
 )
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.option("--list-tests", "-l", is_flag=True, help="List available tests")
-def main(config, test, group, output_dir, output_format, verbose, list_tests):
+@click.option(
+    "--sdk",
+    help="SDK to test against (e.g., 'boto3', 'aws-sdk-go-v2')",
+)
+@click.option(
+    "--sdk-version",
+    help="SDK version to test (e.g., '1.26.0', 'latest')",
+)
+@click.option(
+    "--defconfig",
+    type=click.Path(exists=True),
+    help="Load SDK configuration from defconfig file",
+)
+def main(
+    config,
+    test,
+    group,
+    output_dir,
+    output_format,
+    verbose,
+    list_tests,
+    sdk,
+    sdk_version,
+    defconfig,
+):
     """MSST-S3 Test Runner - Execute S3 interoperability tests"""
 
     # Load configuration
@@ -405,6 +454,63 @@ def main(config, test, group, output_dir, output_format, verbose, list_tests):
             f"Warning: Configuration file {config} not found, using defaults", err=True
         )
         test_config = {}
+
+    # Load defconfig if specified (overrides config file SDK settings)
+    if defconfig:
+        defconfig_path = Path(defconfig)
+        if defconfig_path.exists():
+            with open(defconfig_path, "r") as f:
+                if defconfig_path.suffix in [".yaml", ".yml"]:
+                    defconfig_data = yaml.safe_load(f)
+                    # Merge defconfig into test_config
+                    test_config.update(defconfig_data)
+                    if verbose:
+                        click.echo(f"Loaded defconfig from {defconfig}")
+
+    # Override SDK settings from CLI arguments
+    if sdk:
+        test_config["s3_sdk"] = sdk
+    if sdk_version:
+        test_config["s3_sdk_version"] = sdk_version
+
+    # Generate SDK capability profile
+    capabilities = None
+    if SDK_CAPS_AVAILABLE:
+        sdk_name = test_config.get("s3_sdk", "boto3")
+        sdk_ver = test_config.get("s3_sdk_version", "latest")
+        override_json = test_config.get("s3_cap_profile_json")
+        force_override = test_config.get("s3_cap_profile_override", False)
+        endpoint_hint = test_config.get("s3_endpoint_url")
+        caps_output = test_config.get("s3_caps_json_path", ".sdk_capabilities.json")
+
+        try:
+            spec = SDKSpec(name=sdk_name, version=sdk_ver)
+            capabilities = build_caps_document(
+                spec=spec,
+                endpoint_hint=endpoint_hint,
+                override_json_path=override_json if force_override else None,
+                force_override=force_override,
+            )
+
+            # Save capabilities to file
+            caps_path = Path(caps_output)
+            with open(caps_path, "w") as f:
+                json.dump(capabilities, f, indent=2)
+
+            if verbose:
+                click.echo(f"Generated SDK capability profile for {sdk_name} {sdk_ver}")
+                click.echo(f"Capabilities saved to {caps_path}")
+                click.echo(f"Sources: {', '.join(capabilities.get('sources', []))}")
+
+        except Exception as e:
+            click.echo(f"Warning: Failed to generate SDK capabilities: {e}", err=True)
+            if verbose:
+                traceback.print_exc()
+    else:
+        if verbose:
+            click.echo(
+                "SDK capabilities module not available, using default capabilities"
+            )
 
     # Setup test discovery
     test_dir = Path(__file__).parent.parent / "tests"
@@ -482,7 +588,7 @@ def main(config, test, group, output_dir, output_format, verbose, list_tests):
         click.echo(f"Running {len(tests_to_run)} tests...")
 
     # Execute tests
-    executor = TestExecutor(test_config)
+    executor = TestExecutor(test_config, capabilities)
     results = []
 
     if run_mode == "parallel" and parallel_jobs > 1:
@@ -514,21 +620,25 @@ def main(config, test, group, output_dir, output_format, verbose, list_tests):
                     }.get(result.status, "?")
 
                     if verbose or result.status != TestStatus.PASSED:
-                        click.echo(f"[{status_char}] Test {result.test_id}: {result.status.value}")
+                        click.echo(
+                            f"[{status_char}] Test {result.test_id}: {result.status.value}"
+                        )
                         if result.message and result.status != TestStatus.PASSED:
                             click.echo(f"  {result.message}")
                 except Exception as e:
                     click.echo(f"[!] Test {test_info['id']} failed with exception: {e}")
-                    results.append(TestResult(
-                        test_id=test_info['id'],
-                        test_name=test_info['name'],
-                        test_group=test_info['group'],
-                        status=TestStatus.ERROR,
-                        duration=0.0,
-                        message=f"Execution failed: {str(e)}",
-                        error=traceback.format_exc(),
-                        timestamp=datetime.now().isoformat()
-                    ))
+                    results.append(
+                        TestResult(
+                            test_id=test_info["id"],
+                            test_name=test_info["name"],
+                            test_group=test_info["group"],
+                            status=TestStatus.ERROR,
+                            duration=0.0,
+                            message=f"Execution failed: {str(e)}",
+                            error=traceback.format_exc(),
+                            timestamp=datetime.now().isoformat(),
+                        )
+                    )
     else:
         # Sequential execution (original code)
         for test_info in tests_to_run:
@@ -549,7 +659,9 @@ def main(config, test, group, output_dir, output_format, verbose, list_tests):
             }.get(result.status, "?")
 
             if verbose or result.status != TestStatus.PASSED:
-                click.echo(f"[{status_char}] Test {result.test_id}: {result.status.value}")
+                click.echo(
+                    f"[{status_char}] Test {result.test_id}: {result.status.value}"
+                )
                 if result.message and result.status != TestStatus.PASSED:
                     click.echo(f"  {result.message}")
 

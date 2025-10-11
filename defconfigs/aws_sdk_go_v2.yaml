@@ -1,0 +1,12 @@
+---
+# Defconfig for aws-sdk-go-v2 (latest)
+# Go SDK v2 for AWS S3
+
+s3_sdk: "aws-sdk-go-v2"
+s3_sdk_version: "latest"
+
+# Expected capabilities for aws-sdk-go-v2
+# - Modern SDK with full SigV4 support
+# - Virtual-hosted style by default
+# - Standard retry mode with adaptive capabilities
+# - Full ListObjectsV2 support
