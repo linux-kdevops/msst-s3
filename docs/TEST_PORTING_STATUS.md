@@ -14,11 +14,11 @@ This document tracks the progress of porting S3 API tests from [versitygw](https
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| **Ported** | 537 | 90.7% |
-| **Remaining** | 55 | 9.3% |
+| **Ported** | 548 | 92.6% |
+| **Remaining** | 44 | 7.4% |
 | **Total** | 592 | 100% |
 
-## Ported Tests (537 tests across 55 files)
+## Ported Tests (548 tests across 56 files)
 
 ### ✅ test_put_bucket_policy.py (10 tests)
 Tests PutBucketPolicy, GetBucketPolicy, and DeleteBucketPolicy API operations.
@@ -68,6 +68,21 @@ Tests PutBucketTagging, GetBucketTagging, and DeleteBucketTagging API operations
 - `test_get_bucket_tagging_no_tags` - NoSuchTagSet for bucket with no tags
 - `test_delete_bucket_tagging_success` - Remove all tags from bucket
 - `test_put_bucket_tagging_update` - PutBucketTagging replaces all existing tags
+
+### ✅ test_bucket_cors.py (11 tests)
+Tests PutBucketCors, GetBucketCors, and DeleteBucketCors API operations.
+
+- `test_put_bucket_cors_non_existing_bucket` - NoSuchBucket for non-existing bucket
+- `test_put_bucket_cors_empty_cors_rules` - Empty CORS rules rejected (MalformedXML)
+- `test_put_bucket_cors_invalid_method` - Invalid HTTP methods rejected (case-sensitive, GET/PUT/POST/DELETE/HEAD only)
+- `test_put_bucket_cors_invalid_header` - Invalid header names with special chars rejected
+- `test_put_bucket_cors_md5` - ContentMD5 validation (InvalidDigest/BadDigest)
+- `test_put_bucket_cors_success` - Multiple CORS rules with wildcards and negative MaxAgeSeconds
+- `test_get_bucket_cors_non_existing_bucket` - NoSuchBucket for non-existing bucket
+- `test_get_bucket_cors_no_such_bucket_cors` - NoSuchCORSConfiguration for bucket without CORS
+- `test_get_bucket_cors_success` - Retrieve and verify CORS rules
+- `test_delete_bucket_cors_non_existing_bucket` - NoSuchBucket for non-existing bucket
+- `test_delete_bucket_cors_success` - Delete CORS configuration and verify removal
 
 ### ✅ test_get_object_attributes.py (10 tests)
 Tests GetObjectAttributes API operations.
@@ -909,6 +924,29 @@ Ported by: Claude AI (working with Luis Chamberlain <mcgrof@kernel.org>)
 ## Recent Additions (Latest Batches)
 
 **🎉 MILESTONE: 90% Complete! 🎉**
+
+**Batch 50 (2025-10-10)**: Added 11 tests - **REACHED 92.6%! ✅ Bucket CORS COMPLETE!**
+- **test_bucket_cors.py**: 11 bucket CORS configuration tests (5 passed, 6 skipped - MinIO CORS not supported)
+- PutBucketCors tests (6 tests):
+  - Non-existing bucket error (NoSuchBucket) - passed
+  - Empty CORS rules rejected (MalformedXML/InvalidRequest) - skipped
+  - Invalid HTTP methods (lowercase, PATCH, OPTIONS, invalid) - skipped
+  - Invalid header names (special chars: space, :, (), /, [], =, ") - skipped
+  - ContentMD5 validation (InvalidDigest/BadDigest) - passed
+  - Successful CORS with multiple rules, wildcards, negative MaxAge - skipped
+- GetBucketCors tests (3 tests):
+  - Non-existing bucket error (NoSuchBucket) - passed
+  - Bucket without CORS returns NoSuchCORSConfiguration - passed
+  - Retrieve and verify CORS rules - skipped
+- DeleteBucketCors tests (2 tests):
+  - Non-existing bucket error (NoSuchBucket) - passed
+  - Delete CORS and verify removal - skipped
+- MinIO compatibility:
+  - CORS not supported by MinIO (NotImplemented error)
+  - Tests skip gracefully when CORS not available
+  - Basic error handling tests pass (NoSuchBucket checks)
+  - Validates AWS S3 CORS API behavior for compatible implementations
+  - Tests document CORS rules, method/header validation, and MD5 checking
 
 **Batch 49 (2025-10-10)**: Added 5 tests - **REACHED 90.7%! ✅ PASSED 90%! Object Tagging COMPLETE!**
 - **test_object_tagging.py**: Added 5 validation tests to existing 10 tests (100% pass rate)
