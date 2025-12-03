@@ -142,6 +142,7 @@ Pre-configured test profiles for common scenarios:
 
 **Docker-based Configurations:**
 - **docker-demo**: Automated demo with MinIO and synthetic data
+- **docker-rustfs**: Test against RustFS (Rust-based S3 storage)
 - **docker-localstack**: Test against LocalStack (AWS emulator)
 - **docker-ceph**: Test against Ceph RadosGW
 - **docker-garage**: Test against Garage S3
@@ -199,6 +200,7 @@ without manual setup:
 | Provider | Port | Endpoint | Description |
 |----------|------|----------|-------------|
 | MinIO | 9000 | http://localhost:9000 | High-performance S3-compatible storage |
+| RustFS | 9002 | http://localhost:9002 | High-performance Rust-based S3 storage |
 | LocalStack | 4566 | http://localhost:4566 | AWS services emulator |
 | Ceph RadosGW | 8082 | http://localhost:8082 | Ceph's S3 interface |
 | Garage | 3900 | http://localhost:3900 | Distributed S3 storage |
@@ -254,6 +256,102 @@ make test                     # Run tests
 make defconfig-docker-demo
 make test-with-docker
 ```
+
+## Backend Comparison
+
+MSST-S3 includes a comparison tool to evaluate different S3 backends
+side-by-side, measuring both compatibility and performance.
+
+### MinIO vs RustFS Comparison
+
+We provide a pre-generated comparison report and tools to run your own:
+
+**[📊 View Comparison Report → compare-s3-minio-vs-rustfs.md](compare-s3-minio-vs-rustfs.md)**
+
+#### Quick Comparison Results
+
+| Metric | MinIO | RustFS |
+|--------|-------|--------|
+| **Pass Rate** | 98.7% | 94.7% |
+| **Avg Test Duration** | 0.867s | 0.792s |
+| **Performance** | Baseline | 10% faster |
+| **Maturity** | Production | Alpha |
+| **License** | AGPL v3 | Apache 2.0 |
+
+### Running Your Own Comparison
+
+#### Prerequisites
+
+```bash
+# Ensure Python dependencies are installed
+python3 -m venv .venv
+source .venv/bin/activate
+pip install boto3 pyyaml click
+```
+
+#### Start the Backends
+
+```bash
+# Start MinIO (if not already running)
+docker run -d --name msst-minio \
+  -p 9000:9000 -p 9001:9001 \
+  -e MINIO_ROOT_USER=minioadmin \
+  -e MINIO_ROOT_PASSWORD=minioadmin \
+  quay.io/minio/minio server /data --console-address ":9001"
+
+# Start RustFS
+docker run -d --name msst-rustfs \
+  -p 9002:9000 -p 9003:9001 \
+  rustfs/rustfs:latest
+```
+
+#### Run the Comparison
+
+```bash
+# Basic comparison (basic, multipart, versioning tests)
+python scripts/compare-backends.py \
+  -b minio -b rustfs \
+  -g basic -g multipart -g versioning \
+  --no-start-containers
+
+# Full comparison with performance tests
+python scripts/compare-backends.py \
+  -b minio -b rustfs \
+  -g basic -g multipart -g versioning -g performance \
+  -o comparison-results \
+  -r my-comparison-report.md \
+  --no-start-containers
+
+# With automatic container management
+python scripts/compare-backends.py \
+  -b minio -b rustfs \
+  -g basic -g multipart \
+  --start-containers \
+  --stop-containers
+```
+
+#### Comparison Script Options
+
+| Option | Description |
+|--------|-------------|
+| `-b, --backends` | Backends to compare (minio, rustfs) |
+| `-g, --groups` | Test groups to run (basic, multipart, versioning, etc.) |
+| `-o, --output-dir` | Directory for detailed results |
+| `-r, --report` | Output markdown report filename |
+| `-j, --parallel-jobs` | Number of parallel test workers |
+| `--start-containers` | Auto-start Docker containers |
+| `--stop-containers` | Auto-stop containers after tests |
+
+#### Understanding the Report
+
+The generated report includes:
+- **Executive Summary**: Overall pass rates and performance metrics
+- **Visual Comparisons**: ASCII bar charts for quick assessment
+- **Category Breakdown**: Results per test category (basic, multipart, etc.)
+- **Test Differences**: Tests that passed on one backend but failed on another
+- **Feature Analysis**: Which S3 features each backend supports
+- **Performance Deep Dive**: Slowest tests and timing comparisons
+- **Recommendations**: Use case guidance for each backend
 
 ## Production Validation
 
