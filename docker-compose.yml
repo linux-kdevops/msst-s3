@@ -23,6 +23,28 @@ services:
     networks:
       - s3-network
 
+  # RustFS - High-performance Rust-based S3 compatible storage
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: msst-rustfs
+    ports:
+      - "9002:9000"  # S3 API (mapped to 9002 to avoid MinIO conflict)
+      - "9003:9001"  # Console (mapped to 9003 to avoid MinIO conflict)
+    environment:
+      RUSTFS_ROOT_USER: rustfsadmin
+      RUSTFS_ROOT_PASSWORD: rustfsadmin
+    volumes:
+      - rustfs-data:/data
+      - rustfs-logs:/logs
+    user: "10001:10001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - s3-network
+
   # LocalStack - AWS services emulator
   localstack:
     image: localstack/localstack:latest
@@ -106,6 +128,8 @@ services:
 
 volumes:
   minio-data:
+  rustfs-data:
+  rustfs-logs:
   localstack-data:
   garage-meta:
   garage-data:
