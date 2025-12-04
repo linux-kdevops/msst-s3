@@ -1,0 +1,114 @@
+# SPDX-License-Identifier: MIT
+# Kconfig integration using Python kconfiglib
+
+# Configuration files
+KCONFIG := Kconfig
+CONFIG_FILE := .config
+CONFIG_OLD := .config.old
+DEFCONFIG_DIR := defconfigs
+
+# Python-based Kconfig tools
+PYCONF := python3 scripts/pyconf.py
+PYMENUCONFIG := python3 scripts/pymenuconfig.py
+
+# Export for sub-makefiles
+export KCONFIG_CONFIG := $(CONFIG_FILE)
+
+# Include the config file if it exists
+-include $(CONFIG_FILE)
+
+# Kconfig targets
+.PHONY: menuconfig nconfig config oldconfig defconfig savedefconfig
+
+menuconfig:
+	@$(PYMENUCONFIG) $(KCONFIG)
+
+nconfig:
+	@$(PYMENUCONFIG) $(KCONFIG)
+
+config:
+	@echo "Interactive config not implemented. Use menuconfig instead."
+	@exit 1
+
+oldconfig:
+	@$(PYCONF) $(KCONFIG) --oldconfig --config=$(CONFIG_FILE)
+
+# Load a defconfig
+defconfig:
+	@if [ -z "$(DEFCONFIG)" ]; then \
+		echo "Usage: make defconfig DEFCONFIG=<config_name>"; \
+		echo "Use 'make list-defconfigs' to see available configurations"; \
+		exit 1; \
+	fi
+	@if [ -f "$(DEFCONFIG_DIR)/$(DEFCONFIG)" ]; then \
+		echo "Loading defconfig: $(DEFCONFIG)"; \
+		cp "$(DEFCONFIG_DIR)/$(DEFCONFIG)" $(CONFIG_FILE); \
+		$(PYCONF) $(KCONFIG) --olddefconfig --config=$(CONFIG_FILE); \
+	else \
+		echo "Error: Configuration '$(DEFCONFIG)' not found"; \
+		echo "Use 'make list-defconfigs' to see available configurations"; \
+		exit 1; \
+	fi
+
+# Save current config as defconfig
+savedefconfig:
+	@if [ -z "$(DEFCONFIG)" ]; then \
+		echo "Usage: make savedefconfig DEFCONFIG=<config_name>"; \
+		exit 1; \
+	fi
+	@echo "Saving defconfig to: $(DEFCONFIG_DIR)/$(DEFCONFIG)"
+	@mkdir -p $(DEFCONFIG_DIR)
+	@$(PYCONF) $(KCONFIG) --savedefconfig=$(DEFCONFIG_DIR)/$(DEFCONFIG) --config=$(CONFIG_FILE)
+
+# List available defconfigs
+list-defconfigs:
+	@echo "Available defconfigs:"
+	@if [ -d "$(DEFCONFIG_DIR)" ]; then ls -1 $(DEFCONFIG_DIR)/ | sed 's/^/  /'; fi
+
+# Generate defconfig-* targets for tab completion
+DEFCONFIGS := $(notdir $(wildcard $(DEFCONFIG_DIR)/*))
+define defconfig_rule
+defconfig-$(1):
+	@$(MAKE) defconfig DEFCONFIG=$(1)
+endef
+$(foreach config,$(DEFCONFIGS),$(eval $(call defconfig_rule,$(config))))
+
+# Special config targets
+allyesconfig:
+	@echo "Enabling all features..."
+	@$(PYCONF) $(KCONFIG) --olddefconfig --config=$(CONFIG_FILE)
+
+allnoconfig:
+	@echo "Disabling all optional features..."
+	@echo "# Minimal configuration" > $(CONFIG_FILE)
+	@$(PYCONF) $(KCONFIG) --olddefconfig --config=$(CONFIG_FILE)
+
+# Clean config files
+clean-config:
+	@rm -f $(CONFIG_FILE) $(CONFIG_OLD) .config.cmd
+
+# Help for Kconfig targets
+kconfig-help:
+	@echo "Kconfig targets (Python-based):"
+	@echo "  menuconfig       - Update configuration using ncurses menu (kconfiglib)"
+	@echo "  nconfig          - Same as menuconfig"
+	@echo "  oldconfig        - Update configuration using defaults for new options"
+	@echo "  defconfig        - Load a defconfig (DEFCONFIG=<name>)"
+	@echo "  savedefconfig    - Save current config as defconfig (DEFCONFIG=<name>)"
+	@echo "  list-defconfigs  - List available defconfig files"
+	@echo "  clean-config     - Remove configuration files"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make defconfig-minio      # Load minio defconfig"
+	@echo "  make menuconfig           # Interactive configuration"
+	@echo "  make savedefconfig DEFCONFIG=my-config  # Save current config"
+
+# Ensure config exists before building
+check-config:
+	@if [ ! -f "$(CONFIG_FILE)" ]; then \
+		echo "Error: No configuration found!"; \
+		echo "Run 'make menuconfig' or 'make defconfig DEFCONFIG=<name>' first"; \
+		echo ""; \
+		$(MAKE) list-defconfigs; \
+		exit 1; \
+	fi

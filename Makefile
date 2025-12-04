@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: MIT
 # Multi-vendor S3 Storage Test Suite (MSST-S3)
 
 # Project version
@@ -7,22 +7,12 @@ PATCHLEVEL = 0
 SUBLEVEL = 0
 EXTRAVERSION =
 
-# Kconfig setup
-export KCONFIG_DIR := $(CURDIR)/scripts/kconfig
+# Kconfig setup (Python-based using kconfiglib)
 export KCONFIG_CONFIG := $(CURDIR)/.config
 export KCONFIG_YAMLCFG := $(CURDIR)/s3_config.yaml
 
-# Include kconfig build system
-include $(KCONFIG_DIR)/kconfig.Makefile
-include Makefile.subtrees
-
-# Defconfig support
-DEFCONFIGS := $(notdir $(wildcard defconfigs/*))
-$(foreach cfg,$(DEFCONFIGS),$(eval defconfig-$(cfg): defconfigs/$(cfg)))
-
-defconfig-%: $(KCONFIG_DIR)/conf Kconfig
-	@echo "Loading defconfig: $*"
-	@$(KCONFIG_DIR)/conf --defconfig=defconfigs/$* Kconfig
+# Include Python-based kconfig build system
+include Makefile.kconfig
 
 # Python setup
 PYTHON := python3
@@ -116,22 +106,13 @@ help:
 	@echo "  make distclean     - Clean everything including config"
 	@echo ""
 	@echo "Maintenance:"
-	@echo "  make refresh-kconfig - Update kconfig from upstream"
 	@echo "  make check-config   - Validate configuration"
 	@echo "  make show-config    - Display current configuration"
+	@echo "  make kconfig-help   - Show kconfig target help"
 
 # Configuration targets
 .PHONY: config
 config: menuconfig
-
-.PHONY: check-config
-check-config: $(KCONFIG_CONFIG)
-	@echo "Checking configuration..."
-	@if [ ! -f "$(KCONFIG_CONFIG)" ]; then \
-		echo "Error: No configuration found. Run 'make config' first."; \
-		exit 1; \
-	fi
-	@echo "Configuration OK: $(KCONFIG_CONFIG)"
 
 .PHONY: show-config
 show-config: check-config

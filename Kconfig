@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: MIT
 mainmenu "Multi-vendor S3 Storage Test Suite (MSST-S3) Configuration"
 
 # S3 Endpoint Configuration
@@ -6,7 +6,6 @@ menu "S3 Endpoint Configuration"
 
 config S3_ENDPOINT_URL
 	string "S3 endpoint URL"
-	output yaml
 	default "http://localhost:9000"
 	help
 	  The S3-compatible endpoint URL to test against.
@@ -17,21 +16,18 @@ config S3_ENDPOINT_URL
 
 config S3_ACCESS_KEY
 	string "S3 access key"
-	output yaml
 	default "minioadmin"
 	help
 	  Access key for S3 authentication.
 
 config S3_SECRET_KEY
 	string "S3 secret key"
-	output yaml
 	default "minioadmin"
 	help
 	  Secret key for S3 authentication.
 
 config S3_REGION
 	string "S3 region"
-	output yaml
 	default "us-east-1"
 	help
 	  AWS region for the S3 endpoint.
@@ -39,14 +35,12 @@ config S3_REGION
 
 config S3_USE_SSL
 	bool "Use SSL/TLS"
-	output yaml
 	default n
 	help
 	  Enable SSL/TLS for secure connections.
 
 config S3_VERIFY_SSL
 	bool "Verify SSL certificates"
-	output yaml
 	depends on S3_USE_SSL
 	default y
 	help
@@ -54,7 +48,6 @@ config S3_VERIFY_SSL
 
 config S3_BUCKET_PREFIX
 	string "Test bucket prefix"
-	output yaml
 	default "msst-test"
 	help
 	  Prefix for test bucket names. Each test will append
@@ -67,7 +60,6 @@ menu "Test Selection"
 
 config TEST_BASIC
 	bool "Basic S3 operations (001-099)"
-	output yaml
 	default y
 	help
 	  Enable basic S3 operation tests including:
@@ -77,7 +69,6 @@ config TEST_BASIC
 
 config TEST_MULTIPART
 	bool "Multipart upload tests (100-199)"
-	output yaml
 	default y
 	help
 	  Enable multipart upload tests including:
@@ -88,7 +79,6 @@ config TEST_MULTIPART
 
 config TEST_VERSIONING
 	bool "Versioning tests (200-299)"
-	output yaml
 	default n
 	help
 	  Enable object versioning tests including:
@@ -98,7 +88,6 @@ config TEST_VERSIONING
 
 config TEST_ACL
 	bool "Access control tests (300-399)"
-	output yaml
 	default n
 	help
 	  Enable access control tests including:
@@ -109,7 +98,6 @@ config TEST_ACL
 
 config TEST_ENCRYPTION
 	bool "Encryption tests (400-499)"
-	output yaml
 	default n
 	help
 	  Enable encryption tests including:
@@ -119,7 +107,6 @@ config TEST_ENCRYPTION
 
 config TEST_LIFECYCLE
 	bool "Lifecycle tests (500-599)"
-	output yaml
 	default n
 	help
 	  Enable lifecycle management tests including:
@@ -129,7 +116,6 @@ config TEST_LIFECYCLE
 
 config TEST_PERFORMANCE
 	bool "Performance tests (600-699)"
-	output yaml
 	default n
 	help
 	  Enable performance tests to measure:
@@ -139,7 +125,6 @@ config TEST_PERFORMANCE
 
 config TEST_STRESS
 	bool "Stress tests (700-799)"
-	output yaml
 	default n
 	help
 	  Enable stress tests including:
@@ -149,7 +134,6 @@ config TEST_STRESS
 
 config TEST_COMPATIBILITY
 	bool "Vendor compatibility tests (800-899)"
-	output yaml
 	default n
 	help
 	  Enable vendor-specific compatibility tests
@@ -162,7 +146,6 @@ menu "Test Parameters"
 
 config TEST_RUN_MODE
 	string "Test run mode"
-	output yaml
 	default "sequential"
 	help
 	  Test execution mode:
@@ -172,7 +155,6 @@ config TEST_RUN_MODE
 
 config TEST_PARALLEL_ALL
 	bool "Run ALL tests in parallel simultaneously"
-	output yaml
 	default n
 	help
 	  WARNING: This will run ALL tests at the same time!
@@ -183,7 +165,6 @@ config TEST_PARALLEL_ALL
 
 config TEST_PARALLEL_JOBS
 	int "Parallel test jobs"
-	output yaml
 	depends on TEST_RUN_MODE = "parallel" || TEST_RUN_MODE = "group"
 	depends on !TEST_PARALLEL_ALL
 	default 4
@@ -193,7 +174,6 @@ config TEST_PARALLEL_JOBS
 
 config TEST_TIMEOUT
 	int "Test timeout (seconds)"
-	output yaml
 	default 300
 	range 10 3600
 	help
@@ -201,7 +181,6 @@ config TEST_TIMEOUT
 
 config TEST_RETRY_COUNT
 	int "Test retry count"
-	output yaml
 	default 3
 	range 0 10
 	help
@@ -209,7 +188,6 @@ config TEST_RETRY_COUNT
 
 config TEST_OBJECT_SIZES
 	string "Object sizes for tests"
-	output yaml
 	default "1KB,1MB,10MB,100MB"
 	help
 	  Comma-separated list of object sizes to test.
@@ -217,7 +195,6 @@ config TEST_OBJECT_SIZES
 
 config TEST_BUCKET_COUNT
 	int "Number of buckets per test"
-	output yaml
 	default 5
 	range 1 100
 	help
@@ -225,7 +202,6 @@ config TEST_BUCKET_COUNT
 
 config TEST_OBJECT_COUNT
 	int "Number of objects per test"
-	output yaml
 	default 10
 	range 1 10000
 	help
@@ -239,7 +215,6 @@ menu "Performance Test Configuration"
 
 config PERF_DURATION
 	int "Performance test duration (seconds)"
-	output yaml
 	default 60
 	range 10 3600
 	help
@@ -247,7 +222,6 @@ config PERF_DURATION
 
 config PERF_CONCURRENT_CLIENTS
 	int "Concurrent clients"
-	output yaml
 	default 10
 	range 1 1000
 	help
@@ -255,7 +229,6 @@ config PERF_CONCURRENT_CLIENTS
 
 config PERF_WARMUP_TIME
 	int "Warmup time (seconds)"
-	output yaml
 	default 10
 	range 0 60
 	help
@@ -263,7 +236,6 @@ config PERF_WARMUP_TIME
 
 config PERF_COLLECT_METRICS
 	bool "Collect detailed metrics"
-	output yaml
 	default y
 	help
 	  Collect detailed performance metrics including
@@ -277,7 +249,6 @@ menu "Stress Test Configuration"
 
 config STRESS_DURATION
 	int "Stress test duration (seconds)"
-	output yaml
 	default 300
 	range 60 86400
 	help
@@ -285,7 +256,6 @@ config STRESS_DURATION
 
 config STRESS_MAX_OBJECTS
 	int "Maximum objects to create"
-	output yaml
 	default 10000
 	range 100 1000000
 	help
@@ -293,7 +263,6 @@ config STRESS_MAX_OBJECTS
 
 config STRESS_CONCURRENT_OPS
 	int "Concurrent operations"
-	output yaml
 	default 100
 	range 10 10000
 	help
@@ -301,7 +270,6 @@ config STRESS_CONCURRENT_OPS
 
 config STRESS_MIXED_WORKLOAD
 	bool "Use mixed workload"
-	output yaml
 	default y
 	help
 	  Mix different operation types (PUT, GET, DELETE) in stress tests.
@@ -313,7 +281,6 @@ menu "Output Configuration"
 
 config OUTPUT_FORMAT
 	string "Output format"
-	output yaml
 	default "json"
 	help
 	  Test result output format:
@@ -324,7 +291,6 @@ config OUTPUT_FORMAT
 
 config OUTPUT_VERBOSE
 	int "Verbosity level"
-	output yaml
 	default 1
 	range 0 3
 	help
@@ -336,21 +302,18 @@ config OUTPUT_VERBOSE
 
 config OUTPUT_DIR
 	string "Output directory"
-	output yaml
 	default "./results"
 	help
 	  Directory to store test results and logs.
 
 config OUTPUT_TIMESTAMP
 	bool "Add timestamp to output files"
-	output yaml
 	default y
 	help
 	  Add timestamp to output file names for unique identification.
 
 config OUTPUT_SAVE_LOGS
 	bool "Save detailed logs"
-	output yaml
 	default y
 	help
 	  Save detailed test execution logs for debugging.
@@ -362,14 +325,12 @@ menu "Ansible Integration"
 
 config ANSIBLE_ENABLED
 	bool "Enable Ansible integration"
-	output yaml
 	default n
 	help
 	  Enable Ansible playbook integration for automated testing.
 
 config ANSIBLE_INVENTORY
 	string "Ansible inventory file"
-	output yaml
 	depends on ANSIBLE_ENABLED
 	default "./playbooks/inventory/hosts"
 	help
@@ -377,7 +338,6 @@ config ANSIBLE_INVENTORY
 
 config ANSIBLE_PLAYBOOK
 	string "Main Ansible playbook"
-	output yaml
 	depends on ANSIBLE_ENABLED
 	default "./playbooks/s3-tests.yml"
 	help
@@ -385,7 +345,6 @@ config ANSIBLE_PLAYBOOK
 
 config ANSIBLE_VERBOSE
 	bool "Verbose Ansible output"
-	output yaml
 	depends on ANSIBLE_ENABLED
 	default n
 	help
@@ -398,7 +357,6 @@ menu "Vendor-Specific Settings"
 
 config VENDOR_TYPE
 	string "S3 vendor type"
-	output yaml
 	default "generic"
 	help
 	  S3 implementation type:
@@ -413,7 +371,6 @@ config VENDOR_TYPE
 
 config VENDOR_SKIP_TESTS
 	string "Tests to skip for this vendor"
-	output yaml
 	default ""
 	help
 	  Comma-separated list of test numbers to skip
@@ -421,7 +378,6 @@ config VENDOR_SKIP_TESTS
 
 config VENDOR_SPECIFIC_CONFIG
 	string "Vendor-specific configuration file"
-	output yaml
 	default ""
 	help
 	  Path to vendor-specific configuration file
@@ -434,14 +390,12 @@ menu "Developer Options"
 
 config DEBUG_ENABLED
 	bool "Enable debug mode"
-	output yaml
 	default n
 	help
 	  Enable debug mode with additional logging and checks.
 
 config DEBUG_KEEP_BUCKETS
 	bool "Keep test buckets after tests"
-	output yaml
 	depends on DEBUG_ENABLED
 	default n
 	help
@@ -450,7 +404,6 @@ config DEBUG_KEEP_BUCKETS
 
 config DEBUG_DUMP_REQUESTS
 	bool "Dump HTTP requests"
-	output yaml
 	depends on DEBUG_ENABLED
 	default n
 	help
@@ -458,7 +411,6 @@ config DEBUG_DUMP_REQUESTS
 
 config DEBUG_SLOW_MODE
 	bool "Slow mode execution"
-	output yaml
 	depends on DEBUG_ENABLED
 	default n
 	help
