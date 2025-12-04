@@ -12,6 +12,16 @@ Signed-off-by: Luis Chamberlain <mcgrof@kernel.org>
 
 If another AI is used, use an appropriate tag for the AI.
 
+Do not use:
+
+```
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+These do not add value. As short tag is better as noted erlier with the
+Generated-by tag once.
+
 # Black
 
 Black should be used on all python scripts.
@@ -19,6 +29,47 @@ Black should be used on all python scripts.
 # Docs
 
 Keep max column length to 80 characters.
+
+# Avoid Shopping Cart Lists
+
+**CRITICAL RULE: NEVER USE BULLET POINTS OR ITEMIZED LISTS IN COMMIT MESSAGES**
+
+Generative AI seems to like to make commit logs long itemized lists of things
+it did. This is stupid. This should be avoided. It is creating very silly
+commit logs. Use plain English and get to the point. Be as clear as possible
+and get to the point of not what you want to communicate, but rather what
+will make a reviewer easily understand what the heck you are implementing.
+
+You should *think* hard about your commit log, always.
+
+**WRONG - Shopping cart list with bullet points:**
+```
+Refactored to separate concerns:
+- Distribution files handle package installation and set nfs_server_service
+  variable (nfs-kernel-server for Debian/Ubuntu, nfs-server for RedHat/Fedora)
+- Single systemd task in main.yml handles service enablement using the variable
+```
+
+**WRONG - Change list:**
+```
+Fix by changing:
+  - mirror_service_status.item → mirror_service_status.results
+  - mirror_timer_status.item → mirror_timer_status.results
+```
+
+**Correct - Plain English:**
+```
+Each distribution file now handles package installation and sets the
+nfs_server_service variable to the appropriate service name for that
+distribution. A single systemd task in main.yml then handles service
+enablement using the variable.
+```
+
+**Correct - Plain English:**
+```
+Change both debug tasks to iterate over the .results list instead of
+the non-existent .item attribute.
+```
 
 # Test Creation Rules - CRITICAL
 
